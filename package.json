@@ -1,0 +1,45 @@
+{
+  "name": "@trustrails/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for searching UK electronics products across multiple retailers",
+  "type": "module",
+  "bin": {
+    "trustrails-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "model-context-protocol",
+    "electronics",
+    "uk",
+    "shopping",
+    "products",
+    "price-comparison",
+    "trustrails"
+  ],
+  "author": "TrustRails",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/james-webdev/trustrails-mcp-server.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.20.5",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
