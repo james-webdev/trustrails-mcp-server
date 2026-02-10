@@ -59,7 +59,7 @@ That's it! Restart Claude and start searching.
 
 ```
 "Find me a gaming laptop under £1000"
-"Compare prices for Sony WH-1000XM5 headphones"
+"Compare prices for gaming laptops across retailers"
 "Show me the cheapest 4K monitors over 27 inches"
 "What HP laptops are in stock right now between £500-£700?"
 ```
@@ -76,7 +76,7 @@ Claude will search across multiple UK retailers and show you:
 
 ### `search_products`
 
-Search UK electronics across multiple retailers (AO, Boxed2Me, In Stock UK, Back to the Office).
+Search UK electronics across major UK retailers including AO.
 
 **Parameters:**
 - `query` (string) - Search term (e.g., "laptop", "USB-C charger")
@@ -100,14 +100,7 @@ Get detailed information about a specific product by ID.
 
 ## Supported Retailers
 
-Search across **26,000+ electronics products** from:
-
-- **AO** - Major UK electronics & appliances retailer
-- **Boxed2Me** - Computing & electronics specialist
-- **In Stock UK** - Tech and office equipment
-- **Back to the Office** - Office technology & supplies
-
-*More retailers being added regularly*
+Search across **26,000+ electronics products** from major UK retailers including **AO**, with new retailers added regularly.
 
 ---
 
@@ -115,7 +108,7 @@ Search across **26,000+ electronics products** from:
 
 **Price comparison:**
 ```
-"Compare prices for Sony WH-1000XM5 headphones across all retailers"
+"Compare prices for gaming laptops across all retailers"
 ```
 
 **Budget shopping:**
@@ -145,7 +138,6 @@ Search across **26,000+ electronics products** from:
 - **20 requests per hour** per IP address
 - Rate limit info included in response headers
 - Limits reset every hour
-- Plenty for normal shopping research - just prevents abuse
 
 ---
 
