@@ -76,7 +76,7 @@ Claude will search across multiple UK retailers and show you:
 
 ### `search_products`
 
-Search UK electronics across multiple retailers (AO, Boxed2Me, In Stock UK, Back to the Office).
+Search UK electronics across major UK retailers including AO.
 
 **Parameters:**
 - `query` (string) - Search term (e.g., "laptop", "USB-C charger")
@@ -100,14 +100,7 @@ Get detailed information about a specific product by ID.
 
 ## Supported Retailers
 
-Search across **26,000+ electronics products** from:
-
-- **AO** - Major UK electronics & appliances retailer
-- **Boxed2Me** - Computing & electronics specialist
-- **In Stock UK** - Tech and office equipment
-- **Back to the Office** - Office technology & supplies
-
-*More retailers being added regularly*
+Search across **26,000+ electronics products** from major UK retailers including **AO**, with new retailers added regularly.
 
 ---
 
