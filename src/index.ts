@@ -9,7 +9,7 @@ import {
 
 // TrustRails API configuration
 const API_KEY = process.env.TRUSTRAILS_API_KEY || "mcp-public-2026";
-const BASE_URL = process.env.TRUSTRAILS_BASE_URL || "https://www.trustrails.app";
+const BASE_URL = process.env.TRUSTRAILS_BASE_URL || "https://trustrails.app";
 
 /**
  * TrustRails MCP Server
@@ -24,6 +24,8 @@ interface SearchParams {
   max_price?: number;
   brand?: string;
   category?: string;
+  lite?: boolean;
+  limit?: number;
 }
 
 interface Product {
@@ -86,6 +88,14 @@ async function searchProducts(params: SearchParams): Promise<SearchResponse> {
 
   if (params.category) {
     searchParams.append("category", params.category);
+  }
+
+  if (params.lite) {
+    searchParams.append("lite", "true");
+  }
+
+  if (params.limit && params.limit > 0) {
+    searchParams.append("limit", params.limit.toString());
   }
 
   const url = `${BASE_URL}/api/search?${searchParams.toString()}`;
@@ -157,6 +167,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             category: {
               type: "string",
               description: "Filter by product category (e.g., 'Laptops', 'Headphones', 'Monitors')",
+            },
+            lite: {
+              type: "boolean",
+              description: "Return trimmed product objects with only essential fields (id, title, brand, price, availability, image_url, purchase_url). Reduces payload size by ~80%. Recommended for ChatGPT and other LLMs to avoid parsing timeouts.",
+            },
+            limit: {
+              type: "number",
+              description: "Maximum number of products to return (default 20, max 100)",
             },
           },
         },

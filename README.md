@@ -84,8 +84,10 @@ Search UK electronics across major UK retailers including AO.
 - `max_price` (number, optional) - Maximum price in GBP
 - `brand` (string, optional) - Filter by brand (e.g., "Sony", "HP", "Apple")
 - `category` (string, optional) - Filter by category (e.g., "Laptops", "Headphones")
+- `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Recommended for ChatGPT and other LLMs.
+- `limit` (number, optional) - Maximum products to return (default 20, max 100)
 
-**Returns:** Up to 20 products with full details (title, price, specs, availability, purchase links)
+**Returns:** Up to 20 products (or `limit`) with full details (title, price, specs, availability, purchase links). With `lite: true`, returns only essential fields.
 
 ### `get_product`
 
