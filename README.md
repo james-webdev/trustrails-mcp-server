@@ -146,7 +146,7 @@ Search across **26,000+ electronics products** from major UK retailers including
 ## Environment Variables
 
 - `TRUSTRAILS_API_KEY` - API key (use `mcp-public-2026` for shared public access)
-- `TRUSTRAILS_BASE_URL` - API endpoint (optional, defaults to `https://www.trustrails.app`)
+- `TRUSTRAILS_BASE_URL` - API endpoint (optional, defaults to `https://trustrails.app`)
 
 ---
 
@@ -185,7 +185,7 @@ Search across **26,000+ electronics products** from major UK retailers including
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/trustrails-mcp-server
+git clone https://github.com/james-webdev/trustrails-mcp-server
 cd trustrails-mcp-server
 
 # Install dependencies
@@ -206,8 +206,8 @@ npx @modelcontextprotocol/inspector npm run dev
 
 ## Support & Links
 
-- **Website:** [trustrails.app](https://www.trustrails.app)
-- **Issues:** [GitHub Issues](https://github.com/your-username/trustrails-mcp-server/issues)
+- **Website:** [trustrails.app](https://trustrails.app)
+- **Issues:** [GitHub Issues](https://github.com/james-webdev/trustrails-mcp-server/issues)
 - **NPM:** [@trustrails/mcp-server](https://www.npmjs.com/package/@trustrails/mcp-server)
 - **MCP Registry:** [modelcontextprotocol.io/servers](https://modelcontextprotocol.io/servers)
 
