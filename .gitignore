@@ -28,5 +28,10 @@ Thumbs.db
 # Testing
 coverage/
 
+# MCP Registry (private keys and auth tokens)
+key.pem
+mcp-registry-auth
+.mcpregistry_*
+
 # Misc
 *.tgz
