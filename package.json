@@ -1,7 +1,7 @@
 {
   "name": "@trustrails/mcp-server",
   "version": "1.0.6",
-  "mcpName": "io.github.james-webdev/trustrails",
+  "mcpName": "app.trustrails/server",
   "description": "MCP server for searching UK electronics products across multiple retailers",
   "type": "module",
   "bin": {
