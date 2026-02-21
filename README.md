@@ -102,7 +102,7 @@ Get detailed information about a specific product by ID.
 
 ## Supported Retailers
 
-Search across **26,000+ electronics products** from major UK retailers including **AO**, with new retailers added regularly.
+Search across **45,000+ electronics products** from major UK retailers including **AO**, with new retailers added regularly.
 
 ---
 
