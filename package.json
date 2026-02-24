@@ -1,6 +1,6 @@
 {
   "name": "@trustrails/mcp-server",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "mcpName": "app.trustrails/server",
   "description": "MCP server for searching UK electronics products across multiple retailers",
   "type": "module",

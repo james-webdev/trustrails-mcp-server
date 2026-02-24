@@ -142,15 +142,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "search_products",
         description:
-          "Search for UK electronics products across multiple retailers (AO, Boxed, etc). " +
-          "Returns product details including prices, availability, specs, and purchase links. " +
-          "Perfect for price comparison, product research, or building shopping assistants.",
+          "Search 38,000+ UK electronics products across multiple retailers. " +
+          "Covers laptops, phones, tablets, headphones, monitors, TVs, cameras, keyboards, mice, speakers, and gaming accessories. " +
+          "All prices in GBP. Returns live pricing, stock availability, and direct purchase links. " +
+          "Tips: use short queries (under 6 words), use price filters instead of including prices in the query. " +
+          "If results are too broad, refine using brand and category filters before expanding the query.",
         inputSchema: {
           type: "object",
           properties: {
             query: {
               type: "string",
-              description: "Search query (e.g., 'laptop', 'USB-C charger', 'wireless headphones')",
+              description:
+                "Search term matched against product title and brand. " +
+                "Keep short and specific (typically under 6 words). " +
+                "Do not include prices here — use the price filters instead. " +
+                "Brand can be in the query or passed via the brand filter. " +
+                "Examples: 'laptop', 'iPhone 16', 'noise cancelling headphones'",
             },
             min_price: {
               type: "number",
@@ -162,15 +169,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             brand: {
               type: "string",
-              description: "Filter by brand name (e.g., 'Sony', 'Apple', 'HP')",
+              description:
+                "Filter by brand name (partial match, case-insensitive). " +
+                "Examples: Apple, Samsung, Sony, HP, Dell, Lenovo, Anker, Bose, LG",
             },
             category: {
               type: "string",
-              description: "Filter by product category (e.g., 'Laptops', 'Headphones', 'Monitors')",
+              description:
+                "Filter by product category (partial match, case-insensitive). " +
+                "Available categories: Laptops, Computers, Phones, Headphones, Monitors, " +
+                "Keyboards, Mice, Cameras, Speakers, Digital Radios. " +
+                "Common synonyms also accepted (e.g. Smartphones, TVs, Earbuds, Notebooks).",
             },
             lite: {
               type: "boolean",
-              description: "Return trimmed product objects with only essential fields (id, title, brand, price, availability, image_url, purchase_url). Reduces payload size by ~80%. Recommended for ChatGPT and other LLMs to avoid parsing timeouts.",
+              description:
+                "Return trimmed product objects with only essential fields " +
+                "(id, title, brand, price, availability, image_url, purchase_url). " +
+                "Recommended for LLMs to reduce payload size.",
             },
             limit: {
               type: "number",
