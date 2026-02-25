@@ -76,33 +76,33 @@ Claude will search across multiple UK retailers and show you:
 
 ### `search_products`
 
-Search UK electronics across major UK retailers including AO.
+Search 26,000+ UK electronics products. Returns summary data (title, price, availability, category). For full technical specs, use `get_product`.
 
 **Parameters:**
-- `query` (string) - Search term (e.g., "laptop", "USB-C charger")
+- `query` (string) - Search term (e.g., "laptop", "Sony headphones")
 - `min_price` (number, optional) - Minimum price in GBP
 - `max_price` (number, optional) - Maximum price in GBP
-- `brand` (string, optional) - Filter by brand (e.g., "Sony", "HP", "Apple")
-- `category` (string, optional) - Filter by category (e.g., "Laptops", "Headphones")
-- `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Recommended for ChatGPT and other LLMs.
+- `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
+- `category` (string, optional) - Filter by category: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers. Synonyms accepted (e.g., Smartphones, Earbuds, Notebooks).
+- `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Recommended for LLMs.
 - `limit` (number, optional) - Maximum products to return (default 20, max 100)
 
-**Returns:** Up to 20 products (or `limit`) with full details (title, price, specs, availability, purchase links). With `lite: true`, returns only essential fields.
+**Returns:** Up to 20 products with summary data. With `lite: true`, returns only essential fields (id, title, brand, price, availability, image_url, purchase_url).
 
 ### `get_product`
 
-Get detailed information about a specific product by ID.
+Get full details for a single product. Returns complete technical specifications, full description, stock level, delivery time, and retailer source. Use after `search_products` for detailed comparison or recommendations.
 
 **Parameters:**
 - `product_id` (string) - The product ID from search results
 
-**Returns:** Complete product information including specifications and retailer details
+**Returns:** Complete product with all specs, description, and retailer information
 
 ---
 
 ## Supported Retailers
 
-Search across **45,000+ electronics products** from major UK retailers including **AO**, with new retailers added regularly.
+Search across **26,000+ electronics products** from major UK retailers including AO, with new retailers added regularly.
 
 ---
 

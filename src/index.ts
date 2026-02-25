@@ -38,6 +38,8 @@ interface Product {
   stock: number;
   delivery_time: string;
   image_url?: string;
+  category: string;
+  product_type: 'product' | 'accessory';
   specs: Record<string, any>;
   provenance: {
     source: string;
@@ -142,9 +144,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "search_products",
         description:
-          "Search 38,000+ UK electronics products across multiple retailers. " +
-          "Covers laptops, phones, tablets, headphones, monitors, TVs, cameras, keyboards, mice, speakers, and gaming accessories. " +
-          "All prices in GBP. Returns live pricing, stock availability, and direct purchase links. " +
+          "Search 26,000+ UK electronics products across multiple retailers. " +
+          "Returns summary data: title, brand, price, availability, category, and purchase link. " +
+          "Specs are minimal — for full technical specifications, call get_product with the product ID. " +
+          "Covers: Laptops, Phones, Tablets, Headphones, Monitors, TVs, Cameras, Keyboards, Mice, Speakers, Gaming, " +
+          "Wearables, Printers, Networking, Storage, Audio, Drones, Cables & Chargers. " +
+          "All prices in GBP. " +
           "Tips: use short queries (under 6 words), use price filters instead of including prices in the query. " +
           "If results are too broad, refine using brand and category filters before expanding the query.",
         inputSchema: {
@@ -170,16 +175,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             brand: {
               type: "string",
               description:
-                "Filter by brand name (partial match, case-insensitive). " +
+                "Filter by brand name (exact match, case-insensitive). " +
                 "Examples: Apple, Samsung, Sony, HP, Dell, Lenovo, Anker, Bose, LG",
             },
             category: {
               type: "string",
               description:
-                "Filter by product category (partial match, case-insensitive). " +
-                "Available categories: Laptops, Computers, Phones, Headphones, Monitors, " +
-                "Keyboards, Mice, Cameras, Speakers, Digital Radios. " +
-                "Common synonyms also accepted (e.g. Smartphones, TVs, Earbuds, Notebooks).",
+                "Filter by product category. " +
+                "Available categories: Laptops, Desktops, Tablets, Phones, TVs, Monitors, " +
+                "Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, " +
+                "Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers. " +
+                "Common synonyms also accepted (e.g. Smartphones, Televisions, Earbuds, Notebooks, Routers, Hard Drives).",
             },
             lite: {
               type: "boolean",
@@ -198,8 +204,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "get_product",
         description:
-          "Get detailed information about a specific product by ID. " +
-          "Returns complete product details including specs, availability, pricing, and retailer information.",
+          "Get full details for a single product by ID. " +
+          "Returns complete technical specifications (model number, dimensions, raw category, and all available attributes), " +
+          "full description, pricing, stock level, delivery time, and retailer source. " +
+          "Use this after search_products to get detailed specs for comparison or recommendations. " +
+          "Always call this when a user needs precise product attributes, compatibility info, or side-by-side comparisons.",
         inputSchema: {
           type: "object",
           properties: {
