@@ -31,6 +31,7 @@ interface SearchParams {
 interface Product {
   id: string;
   title: string;
+  description?: string;
   brand?: string;
   price: number;
   currency: string;
@@ -147,7 +148,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "Search 26,000+ UK electronics products across multiple retailers. " +
           "Returns summary data: title, brand, price, availability, category, and purchase link. " +
           "Specs are minimal — for full technical specifications, call get_product with the product ID. " +
-          "Covers: Laptops, Phones, Tablets, Headphones, Monitors, TVs, Cameras, Keyboards, Mice, Speakers, Gaming, " +
+          "Covers: Laptops, Desktops, Phones, Tablets, Headphones, Monitors, TVs, Cameras, Keyboards, Mice, Speakers, Gaming, " +
           "Wearables, Printers, Networking, Storage, Audio, Drones, Cables & Chargers. " +
           "All prices in GBP. " +
           "Tips: use short queries (under 6 words), use price filters instead of including prices in the query. " +
