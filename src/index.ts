@@ -151,49 +151,54 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "Covers: Laptops, Desktops, Phones, Tablets, Headphones, Monitors, TVs, Cameras, Keyboards, Mice, Speakers, Gaming, " +
           "Wearables, Printers, Networking, Storage, Audio, Drones, Cables & Chargers. " +
           "All prices in GBP. " +
-          "Tips: use short queries (under 6 words), use price filters instead of including prices in the query. " +
-          "If results are too broad, refine using brand and category filters before expanding the query.",
+          "IMPORTANT RULES: " +
+          "1) Decompose the user's request into query + filters. Example: 'Sony headphones under £200' → query='headphones', brand='Sony', max_price=200. " +
+          "2) DO NOT put brand names, prices, or model numbers in the query — use the brand, min_price, max_price filters instead. " +
+          "3) Keep the query to 1-3 generic words describing the product type. " +
+          "4) Always set lite=true to reduce payload size. " +
+          "5) If 0 results, try a shorter/broader query or drop filters. " +
+          "6) Use get_product for full specs — do not rely on search results for detailed attributes.",
         inputSchema: {
           type: "object",
           properties: {
             query: {
               type: "string",
               description:
-                "Search term matched against product title and brand. " +
-                "Keep short and specific (typically under 6 words). " +
-                "Do not include prices here — use the price filters instead. " +
-                "Brand can be in the query or passed via the brand filter. " +
-                "Examples: 'laptop', 'iPhone 16', 'noise cancelling headphones'",
+                "1-3 words describing the product type. Matched against product title. " +
+                "DO NOT include brand names, prices, model numbers, or specs — use filters instead. " +
+                "Good: 'laptop', 'headphones', 'charger', 'gaming monitor'. " +
+                "Bad: 'Samsung Galaxy S25 Ultra', 'USB-C charger 65W', 'laptop under 500'.",
             },
             min_price: {
               type: "number",
-              description: "Minimum price filter in GBP (e.g., 100 for products over £100)",
+              description: "Minimum price in GBP. Use this instead of putting prices in the query.",
             },
             max_price: {
               type: "number",
-              description: "Maximum price filter in GBP (e.g., 500 for products under £500)",
+              description: "Maximum price in GBP. Use this instead of putting prices in the query.",
             },
             brand: {
               type: "string",
               description:
                 "Filter by brand name (exact match, case-insensitive). " +
+                "Use this instead of putting brand names in the query. " +
                 "Examples: Apple, Samsung, Sony, HP, Dell, Lenovo, Anker, Bose, LG",
             },
             category: {
               type: "string",
               description:
-                "Filter by product category. " +
-                "Available categories: Laptops, Desktops, Tablets, Phones, TVs, Monitors, " +
+                "Filter by product category. Use ONLY these exact values: " +
+                "Laptops, Desktops, Tablets, Phones, TVs, Monitors, " +
                 "Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, " +
                 "Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers. " +
-                "Common synonyms also accepted (e.g. Smartphones, Televisions, Earbuds, Notebooks, Routers, Hard Drives).",
+                "NOTE: 'Smartphones' is not valid — use 'Phones'. 'Televisions' is not valid — use 'TVs'.",
             },
             lite: {
               type: "boolean",
               description:
                 "Return trimmed product objects with only essential fields " +
                 "(id, title, brand, price, availability, image_url, purchase_url). " +
-                "Recommended for LLMs to reduce payload size.",
+                "Always set to true unless the user specifically needs full product objects.",
             },
             limit: {
               type: "number",
