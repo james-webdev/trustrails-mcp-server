@@ -157,7 +157,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "3) Keep the query to 1-3 generic words describing the product type. " +
           "4) Always set lite=true to reduce payload size. " +
           "5) If 0 results, try a shorter/broader query or drop filters. " +
-          "6) Use get_product for full specs — do not rely on search results for detailed attributes.",
+          "6) Use get_product for full specs — do not rely on search results for detailed attributes. " +
+          "AI USAGE PROTOCOL: " +
+          "For simple browsing, search with lite=true is sufficient. " +
+          "For spec-based queries (wattage, ports, RAM, screen size, weight, etc.), ALWAYS search first, then call get_product on the top 3-5 results and validate constraints against the full specs before recommending. " +
+          "Do not assume technical specs from titles alone. If specs are missing, state that explicitly.",
         inputSchema: {
           type: "object",
           properties: {
