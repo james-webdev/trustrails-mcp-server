@@ -57,18 +57,19 @@ That's it! Restart Claude and start searching.
 
 ### Natural Language Product Search
 
+Just ask Claude naturally — it will decompose your request into the right query and filters:
+
 ```
 "Find me a gaming laptop under £1000"
-"Compare prices for gaming laptops across retailers"
-"Show me the cheapest 4K monitors over 27 inches"
-"What HP laptops are in stock right now between £500-£700?"
+"I need Sony noise cancelling headphones"
+"What HP laptops are available between £500-£700?"
+"Show me Anker chargers"
 ```
 
 Claude will search across multiple UK retailers and show you:
 - Real-time prices & availability
-- Product specs & descriptions
-- Stock status
 - Direct purchase links
+- Then call `get_product` for full specs when you need details
 
 ---
 
@@ -79,12 +80,12 @@ Claude will search across multiple UK retailers and show you:
 Search 26,000+ UK electronics products. Returns summary data (title, price, availability, category). For full technical specs, use `get_product`.
 
 **Parameters:**
-- `query` (string) - Search term (e.g., "laptop", "Sony headphones")
+- `query` (string) - 1-3 words describing the product type (e.g., "laptop", "headphones", "gaming monitor"). Do not include brand names, prices, or model numbers — use filters instead.
 - `min_price` (number, optional) - Minimum price in GBP
 - `max_price` (number, optional) - Maximum price in GBP
 - `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
-- `category` (string, optional) - Filter by category: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers. Synonyms accepted (e.g., Smartphones, Earbuds, Notebooks).
-- `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Recommended for LLMs.
+- `category` (string, optional) - Filter by category: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers.
+- `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Always use for LLM integrations.
 - `limit` (number, optional) - Maximum products to return (default 20, max 100)
 
 **Returns:** Up to 20 products with summary data. With `lite: true`, returns only essential fields (id, title, brand, price, availability, image_url, purchase_url).
@@ -108,29 +109,34 @@ Search across **26,000+ electronics products** from major UK retailers including
 
 ## Example Usage
 
-**Price comparison:**
-```
-"Compare prices for gaming laptops across all retailers"
-```
-
 **Budget shopping:**
 ```
-"Find the cheapest gaming laptops with at least 16GB RAM under £800"
+"Find gaming laptops under £800"
+→ query='gaming laptop', category='Laptops', max_price=800, lite=true
 ```
 
-**Brand research:**
+**Brand search:**
 ```
-"Show me all Apple products between £500 and £1000 currently in stock"
-```
-
-**Stock checking:**
-```
-"Which retailers have the HP Envy x360 in stock right now?"
+"I need Sony headphones under £200"
+→ query='headphones', brand='Sony', max_price=200, lite=true
 ```
 
-**Deal finding:**
+**Category browsing:**
 ```
-"What are the best laptop deals under £600 from any retailer?"
+"Show me cheap monitors"
+→ query='monitor', category='Monitors', max_price=200, lite=true
+```
+
+**Detailed specs:**
+```
+"Tell me the full specs of this laptop"
+→ get_product(product_id) — returns full technical specifications
+```
+
+**Price range:**
+```
+"Apple products between £500 and £1000"
+→ brand='Apple', min_price=500, max_price=1000, lite=true
 ```
 
 ---
