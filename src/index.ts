@@ -206,7 +206,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             limit: {
               type: "number",
-              description: "Maximum number of products to return (default 20, max 100)",
+              description: "Maximum number of products to return (default 50, max 100)",
             },
           },
         },

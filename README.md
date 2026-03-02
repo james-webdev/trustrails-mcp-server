@@ -86,9 +86,9 @@ Search 26,000+ UK electronics products. Returns summary data (title, price, avai
 - `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
 - `category` (string, optional) - Filter by category: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers.
 - `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Always use for LLM integrations.
-- `limit` (number, optional) - Maximum products to return (default 20, max 100)
+- `limit` (number, optional) - Maximum products to return (default 50, max 100)
 
-**Returns:** Up to 20 products with summary data. With `lite: true`, returns only essential fields (id, title, brand, price, availability, image_url, purchase_url).
+**Returns:** Up to 50 products with summary data. With `lite: true`, returns only essential fields (id, title, brand, price, availability, image_url, purchase_url).
 
 ### `get_product`
 
