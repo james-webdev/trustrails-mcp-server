@@ -26,6 +26,7 @@ interface SearchParams {
   category?: string;
   lite?: boolean;
   limit?: number;
+  sort?: string;
 }
 
 interface Product {
@@ -99,6 +100,10 @@ async function searchProducts(params: SearchParams): Promise<SearchResponse> {
 
   if (params.limit && params.limit > 0) {
     searchParams.append("limit", params.limit.toString());
+  }
+
+  if (params.sort) {
+    searchParams.append("sort", params.sort);
   }
 
   const url = `${BASE_URL}/api/search?${searchParams.toString()}`;
@@ -207,6 +212,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             limit: {
               type: "number",
               description: "Maximum number of products to return (default 50, max 100)",
+            },
+            sort: {
+              type: "string",
+              description: "Sort order: 'relevance' (default), 'price_asc' (cheapest first), 'price_desc' (most expensive first). Use 'price_asc' when comparing prices.",
             },
           },
         },

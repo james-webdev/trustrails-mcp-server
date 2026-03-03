@@ -87,6 +87,7 @@ Search 26,000+ UK electronics products. Returns summary data (title, price, avai
 - `category` (string, optional) - Filter by category: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers.
 - `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Always use for LLM integrations.
 - `limit` (number, optional) - Maximum products to return (default 50, max 100)
+- `sort` (string, optional) - Sort order: `relevance` (default), `price_asc` (cheapest first), `price_desc` (most expensive first). Use `price_asc` when comparing prices.
 
 **Returns:** Up to 50 products with summary data. With `lite: true`, returns only essential fields (id, title, brand, price, availability, image_url, purchase_url).
 
@@ -112,13 +113,13 @@ Search across **26,000+ electronics products** from major UK retailers including
 **Budget shopping:**
 ```
 "Find gaming laptops under £800"
-→ query='gaming laptop', category='Laptops', max_price=800, lite=true
+→ query='gaming laptop', category='Laptops', max_price=800, sort='price_asc', lite=true
 ```
 
 **Brand search:**
 ```
 "I need Sony headphones under £200"
-→ query='headphones', brand='Sony', max_price=200, lite=true
+→ query='headphones', brand='Sony', max_price=200, sort='price_asc', lite=true
 ```
 
 **Category browsing:**
