@@ -32,7 +32,6 @@ interface SearchParams {
 interface Product {
   id: string;
   title: string;
-  description?: string;
   brand?: string;
   price: number;
   currency: string;
@@ -42,7 +41,11 @@ interface Product {
   image_url?: string;
   category: string;
   product_type: 'product' | 'accessory';
-  specs: Record<string, any>;
+  specs: {
+    description?: string;
+    model_number?: string;
+    dimensions?: string;
+  };
   provenance: {
     source: string;
     last_updated: string;
@@ -224,8 +227,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         name: "get_product",
         description:
           "Get full details for a single product by ID. " +
-          "Returns complete technical specifications (model number, dimensions, raw category, and all available attributes), " +
-          "full description, pricing, stock level, delivery time, and retailer source. " +
+          "Returns complete technical specifications including specs.description (full prose spec text with processor, RAM, storage, display, ports etc), " +
+          "pricing, stock level, delivery time, and retailer source. " +
           "Use this after search_products to get detailed specs for comparison or recommendations. " +
           "Always call this when a user needs precise product attributes, compatibility info, or side-by-side comparisons.",
         inputSchema: {
