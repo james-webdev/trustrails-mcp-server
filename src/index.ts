@@ -153,8 +153,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "search_products",
         description:
-          "Search 26,000+ UK electronics products across multiple retailers. " +
-          "Returns summary data: title, brand, price, availability, category, and purchase link. " +
+          "Search 26,000+ deduplicated UK electronics products across multiple retailers with price comparison. " +
+          "Returns summary data: title, brand, price, availability, category, purchase link, and offer_count. " +
+          "When offer_count > 1, the product is available from multiple retailers — call get_product to see all offers. " +
           "Specs are minimal — for full technical specifications, call get_product with the product ID. " +
           "Covers: Laptops, Desktops, Phones, Tablets, Headphones, Monitors, TVs, Cameras, Keyboards, Mice, Speakers, Gaming, " +
           "Wearables, Printers, Networking, Storage, Audio, Drones, Cables & Chargers. " +
@@ -169,7 +170,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "AI USAGE PROTOCOL: " +
           "For simple browsing, search with lite=true is sufficient. " +
           "For spec-based queries (wattage, ports, RAM, screen size, weight, etc.), ALWAYS search first, then call get_product on the top 3-5 results and validate constraints against the full specs before recommending. " +
-          "Do not assume technical specs from titles alone. If specs are missing, state that explicitly.",
+          "Do not assume technical specs from titles alone. If specs are missing, state that explicitly. " +
+          "STOCK AVAILABILITY: When a product is availability: out_of_stock, do not recommend it as a purchase. Instead mention it as a notable alternative — especially if it offers a meaningful price advantage — and suggest the user check back. Example: 'This model is £X cheaper at [retailer] but currently out of stock — worth checking back if you're not in a rush.' Never silently omit out-of-stock results; surface them transparently.",
         inputSchema: {
           type: "object",
           properties: {
@@ -228,9 +230,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description:
           "Get full details for a single product by ID. " +
           "Returns complete technical specifications including specs.description (full prose spec text with processor, RAM, storage, display, ports etc), " +
-          "pricing, stock level, delivery time, and retailer source. " +
+          "pricing, stock level, delivery time, and all retailer offers with per-retailer pricing. " +
+          "Accepts both canonical product IDs and original retailer offer IDs. " +
           "Use this after search_products to get detailed specs for comparison or recommendations. " +
-          "Always call this when a user needs precise product attributes, compatibility info, or side-by-side comparisons.",
+          "Always call this when a user needs precise product attributes, compatibility info, side-by-side comparisons, or price comparison across retailers.",
         inputSchema: {
           type: "object",
           properties: {
