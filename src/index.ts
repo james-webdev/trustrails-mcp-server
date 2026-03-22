@@ -205,7 +205,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 "Laptops, Desktops, Tablets, Phones, TVs, Monitors, " +
                 "Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, " +
                 "Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers. " +
-                "NOTE: 'Smartphones' is not valid — use 'Phones'. 'Televisions' is not valid — use 'TVs'.",
+                "NOTE: 'Smartphones' is not valid — use 'Phones'. 'Televisions' is not valid — use 'TVs'. " +
+                "For TVs, use query: 'smart TV' — it returns far more results than 'TV' alone. Avoid query: 'television'.",
             },
             lite: {
               type: "boolean",

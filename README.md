@@ -11,21 +11,18 @@ Built for the [Model Context Protocol (MCP)](https://modelcontextprotocol.io) - 
 
 ## Quick Start
 
-### Installation
-
-```bash
-npm install -g @trustrails/mcp-server
-```
+No installation needed — just add TrustRails to your Claude config.
 
 ### Configuration
 
-**For Claude Code** (`~/.config/claude/config.json`):
+**For Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
 ```json
 {
   "mcpServers": {
     "trustrails": {
-      "command": "trustrails-mcp",
+      "command": "npx",
+      "args": ["-y", "@trustrails/mcp-server"],
       "env": {
         "TRUSTRAILS_API_KEY": "mcp-public-2026"
       }
@@ -34,13 +31,14 @@ npm install -g @trustrails/mcp-server
 }
 ```
 
-**For Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+**For Claude Code** (`~/.config/claude/config.json`):
 
 ```json
 {
   "mcpServers": {
     "trustrails": {
-      "command": "trustrails-mcp",
+      "command": "npx",
+      "args": ["-y", "@trustrails/mcp-server"],
       "env": {
         "TRUSTRAILS_API_KEY": "mcp-public-2026"
       }
@@ -170,14 +168,22 @@ Search across **26,000+ electronics products** from major UK retailers including
 
 ## Troubleshooting
 
-**"Command not found: trustrails-mcp"**
-- Make sure you installed globally: `npm install -g @trustrails/mcp-server`
-- Check your global npm bin path is in $PATH: `npm bin -g`
+**"Command not found" or server not starting**
+- Make sure Node.js is installed and `npx` is available: `npx --version`
+- Try running manually: `npx -y @trustrails/mcp-server`
+- **Using nvm?** Claude Desktop doesn't inherit your shell PATH. Use the full path to node instead:
+  ```json
+  {
+    "command": "/Users/YOUR_USERNAME/.nvm/versions/node/vX.X.X/bin/node",
+    "args": ["/Users/YOUR_USERNAME/.nvm/versions/node/vX.X.X/lib/node_modules/@trustrails/mcp-server/dist/index.js"]
+  }
+  ```
+  First run `npm install -g @trustrails/mcp-server`, then find your node path with `which node`.
 
 **"Rate limit exceeded"**
 - Wait an hour for limits to reset
 - Check `X-RateLimit-Reset` header for exact reset time
-- 20 requests/hour is plenty for normal usage
+- 50 requests/hour is plenty for normal usage
 
 **"No results found"**
 - Try broader search terms (e.g., "laptop" instead of specific model)
