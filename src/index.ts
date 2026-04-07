@@ -161,9 +161,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "Wearables, Printers, Networking, Storage, Audio, Drones, Cables & Chargers. " +
           "All prices in GBP. " +
           "IMPORTANT RULES: " +
-          "1) Decompose the user's request into query + filters. Example: 'Sony headphones under £200' → query='headphones', brand='Sony', max_price=200. " +
-          "2) DO NOT put brand names, prices, or model numbers in the query — use the brand, min_price, max_price filters instead. " +
-          "3) Keep the query to 1-3 generic words describing the product type. " +
+          "1) Decompose the user's request: extract brand → brand filter, category → category filter, price → price filters. What remains is the query. " +
+          "   Example: 'Sony headphones under £200' → brand='Sony', category='Headphones', max_price=200, query omitted. " +
+          "   Example: 'MacBook Neo' → brand='Apple', category='Laptops', query='neo'. " +
+          "   Example: 'Samsung QLED TV' → brand='Samsung', category='TVs', query='qled'. " +
+          "   Example: 'Sony WH-1000XM5' → brand='Sony', category='Headphones', query='WH-1000XM5'. " +
+          "2) DO NOT put brand names or prices in the query — use filters. DO put model lines, series names, and variants in the query (e.g. 'neo', 'ultra', 'slim', 'oled', 'qled', model numbers). " +
+          "3) If brand + category alone fully describe what the user wants, omit the query entirely — fewer query words gives cleaner results. " +
           "4) Always set lite=true to reduce payload size. " +
           "5) If 0 results, try a shorter/broader query or drop filters. " +
           "6) Use get_product for full specs — do not rely on search results for detailed attributes. " +
@@ -178,10 +182,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             query: {
               type: "string",
               description:
-                "1-3 words describing the product type. Matched against product title. " +
-                "DO NOT include brand names, prices, model numbers, or specs — use filters instead. " +
-                "Good: 'laptop', 'headphones', 'charger', 'gaming monitor'. " +
-                "Bad: 'Samsung Galaxy S25 Ultra', 'USB-C charger 65W', 'laptop under 500'.",
+                "Refinement terms after brand and category are extracted. Use for model lines, series names, variants, or model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5'). " +
+                "DO NOT include brand names or prices — use filters. " +
+                "Omit entirely if brand + category fully describe what the user wants.",
             },
             min_price: {
               type: "number",

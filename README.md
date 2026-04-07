@@ -78,7 +78,7 @@ Claude will search across multiple UK retailers and show you:
 Search 26,000+ UK electronics products. Returns summary data (title, price, availability, category). For full technical specs, use `get_product`.
 
 **Parameters:**
-- `query` (string) - 1-3 words describing the product type (e.g., "laptop", "headphones", "gaming monitor"). Do not include brand names, prices, or model numbers — use filters instead.
+- `query` (string) - Refinement terms after brand and category are extracted: model lines, series names, variants, or model numbers (e.g., "neo", "ultra", "oled", "WH-1000XM5"). Omit entirely if brand + category alone describe what's needed. Never put brand names or prices here — use filters.
 - `min_price` (number, optional) - Minimum price in GBP
 - `max_price` (number, optional) - Maximum price in GBP
 - `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
@@ -111,19 +111,19 @@ Search across **26,000+ electronics products** from major UK retailers including
 **Budget shopping:**
 ```
 "Find gaming laptops under £800"
-→ query='gaming laptop', category='Laptops', max_price=800, sort='price_asc', lite=true
+→ category='Laptops', query='gaming', max_price=800, sort='price_asc', lite=true
 ```
 
 **Brand search:**
 ```
 "I need Sony headphones under £200"
-→ query='headphones', brand='Sony', max_price=200, sort='price_asc', lite=true
+→ brand='Sony', category='Headphones', max_price=200, sort='price_asc', lite=true
 ```
 
 **Category browsing:**
 ```
 "Show me cheap monitors"
-→ query='monitor', category='Monitors', max_price=200, lite=true
+→ category='Monitors', max_price=200, lite=true
 ```
 
 **Detailed specs:**
@@ -142,7 +142,7 @@ Search across **26,000+ electronics products** from major UK retailers including
 
 ## Rate Limits
 
-- **20 requests per hour** per IP address
+- **50 requests per hour** per IP address
 - Rate limit info included in response headers
 - Limits reset every hour
 
