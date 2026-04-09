@@ -78,7 +78,7 @@ Claude will search across multiple UK retailers and show you:
 Search 26,000+ UK electronics products. Returns summary data (title, price, availability, category). For full technical specs, use `get_product`.
 
 **Parameters:**
-- `query` (string) - Refinement terms after brand and category are extracted: model lines, series names, variants, or model numbers (e.g., "neo", "ultra", "oled", "WH-1000XM5"). Omit entirely if brand + category alone describe what's needed. Never put brand names or prices here — use filters.
+- `query` (string) - Refinement terms after brand and category are extracted: model lines, series, variants, technology descriptors, or model numbers (e.g., "neo", "ultra", "oled", "WH-1000XM5"). Omit entirely if brand + category alone describe what's needed. Never put brand names, product family names, or prices here — use filters.
 - `min_price` (number, optional) - Minimum price in GBP
 - `max_price` (number, optional) - Maximum price in GBP
 - `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
