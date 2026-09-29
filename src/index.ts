@@ -24,10 +24,32 @@ interface SearchParams {
   max_price?: number;
   brand?: string;
   category?: string;
+  constraints?: SpecConstraints;
   lite?: boolean;
   limit?: number;
   sort?: string;
 }
+
+/** Hard spec requirements, e.g. { memory_gb: { gte: 24 } }; a range is { gte, lte }. Names are validated by the API. */
+type SpecConstraints = Record<string, Partial<Record<"eq" | "gte" | "lte", number>>>;
+
+/** Where a stated value came from. */
+interface AttributeSource {
+  retailer: string;
+  field: "title";
+}
+
+/**
+ * One structured spec of a product, with the evidence for it. confirmed: two or
+ * more retailers state the same value. inferred: one retailer does. conflicting:
+ * retailers state different values, and none is picked. A spec nobody states is
+ * absent, which reads as unknown.
+ */
+type Attribute =
+  | { status: "confirmed" | "inferred"; value: number; sources: AttributeSource[] }
+  | { status: "conflicting"; values: Array<{ value: number; sources: AttributeSource[] }> };
+
+type Attributes = Record<string, Attribute>;
 
 interface Product {
   id: string;
@@ -51,11 +73,17 @@ interface Product {
     last_updated: string;
   };
   purchase_url: string;
+  attributes?: Attributes; // structured specs read from retailer titles (get_product, and constrained searches)
+  constraint_status?: Record<string, "matched" | "unverified" | "failed">; // per spec constraint in the search
 }
 
 interface SearchResponse {
   products: Product[];
   total: number;
+  /** The constraints applied, only when there were any. */
+  constraints?: SpecConstraints;
+  /** Products left out because their attribute states a value that fails a constraint. */
+  excluded_by_constraints?: number;
 }
 
 // Create server instance
@@ -97,6 +125,10 @@ async function searchProducts(params: SearchParams): Promise<SearchResponse> {
     searchParams.append("category", params.category);
   }
 
+  if (params.constraints && Object.keys(params.constraints).length > 0) {
+    searchParams.append("constraints", JSON.stringify(params.constraints));
+  }
+
   if (params.lite) {
     searchParams.append("lite", "true");
   }
@@ -118,6 +150,11 @@ async function searchProducts(params: SearchParams): Promise<SearchResponse> {
   });
 
   if (!response.ok) {
+    // A bad constraints argument comes back as 400 {error} naming the valid names or operators
+    if (response.status === 400) {
+      const body = await response.json().catch(() => null) as { error?: string } | null;
+      if (body?.error) throw new Error(`Search failed: ${body.error}`);
+    }
     throw new Error(`Search failed: ${response.statusText}`);
   }
 
@@ -161,7 +198,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "Wearables, Printers, Networking, Storage, Audio, Drones, Cables & Chargers. " +
           "All prices in GBP. " +
           "IMPORTANT RULES: " +
-          "1) Decompose the user's request: extract brand → brand filter, category → category filter, price → price filters. What remains is the query. " +
+          "1) Decompose the user's request: extract brand → brand filter, category → category filter, price → price filters, RAM/storage/screen size/resolution/refresh rate/wattage/Wi-Fi generation → constraints. What remains is the query. " +
           "   Example: 'Sony headphones under £200' → brand='Sony', category='Headphones', max_price=200, query omitted. " +
           "   Example: 'MacBook Neo' → brand='Apple', category='Laptops', query='neo'. " +
           "   Example: 'Samsung QLED TV' → brand='Samsung', category='TVs', query='qled'. " +
@@ -169,12 +206,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "2) DO NOT put brand names, product family names, full product name strings, or prices in the query — use filters. DO put differentiating identifiers: model lines, series, variants, technology descriptors, and model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5', 's25 ultra'). Any product family name uniquely associated with a brand (e.g. MacBook→Apple, Galaxy→Samsung, ThinkPad→Lenovo) is already implied by brand+category — never put it in query. BAD: query='macbook neo' → GOOD: brand='Apple', category='Laptops', query='neo'. " +
           "3) If brand + category alone fully describe what the user wants, omit the query entirely — fewer query words gives cleaner results. " +
           "4) Always set lite=true to reduce payload size. " +
-          "5) If 0 results, try a shorter/broader query or drop filters. " +
+          "5) If 0 results, try a shorter/broader query or drop filters (but never present a near miss as meeting a requirement). " +
           "6) Use get_product for full specs — do not rely on search results for detailed attributes. " +
           "AI USAGE PROTOCOL: " +
           "For simple browsing, search with lite=true is sufficient. " +
-          "For spec-based queries (wattage, ports, RAM, screen size, weight, etc.), ALWAYS search first, then call get_product on the top 3-5 results and validate constraints against the full specs before recommending. " +
+          "For specs the constraints cannot check (ports, weight, battery), ALWAYS search first, then call get_product on the top 3-5 results and validate against the full specs before recommending. " +
           "Do not assume technical specs from titles alone. If specs are missing, state that explicitly. " +
+          "SPEC REQUIREMENTS: pass hard requirements in `constraints` (memory_gb, storage_gb, screen_in, resolution_p, refresh_hz, power_w, wifi_gen; see its description) instead of query text. " +
+          "They are verified against each product's `attributes`, not just searched, and win over specs written in query (2TB, 100W, 4K, 144Hz, 55\", Wi-Fi 7, 16GB RAM). " +
+          "When present, the response has `constraints` (what was applied, e.g. {memory_gb: {gte: 24}}) and every product has `constraint_status`. " +
+          "'matched' = the product's attribute states a value that meets it. 'unverified' = the attribute is unknown or conflicting: confirm with get_product before saying it meets the requirement. " +
+          "Products whose attribute states a value that fails a constraint are left out and counted in `excluded_by_constraints`. " +
+          "A returned product is only RELATED to the request; only 'matched' means verified. Never treat 'unverified' as a match, and never tell the user a product meets a requirement because it was returned. " +
+          "Matched results come first, also with sort='price_asc'. If none are matched, say that no verified match was found and offer the unverified ones only as unconfirmed. " +
           "STOCK AVAILABILITY: When a product is availability: out_of_stock, do not recommend it as a purchase. Instead mention it as a notable alternative — especially if it offers a meaningful price advantage — and suggest the user check back. Example: 'This model is £X cheaper at [retailer] but currently out of stock — worth checking back if you're not in a rush.' Never silently omit out-of-stock results; surface them transparently.",
         inputSchema: {
           type: "object",
@@ -182,7 +226,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             query: {
               type: "string",
               description:
-                "Refinement terms after brand and category are extracted. Use for model lines, series names, variants, or model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5'). " +
+                "Refinement terms after brand and category are extracted. Use for model lines, series names, variants, or model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5'), " +
+                "and spec requirements written with their unit (e.g. '2TB', '100W', '4K', '144Hz', '55\"', 'Wi-Fi 7', '16GB RAM'), which are verified per result (see constraint_status); prefer the constraints argument for these. " +
                 "DO NOT include brand names, product family names, or prices — use filters. " +
                 "Omit entirely if brand + category fully describe what the user wants.",
             },
@@ -211,11 +256,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 "NOTE: 'Smartphones' is not valid — use 'Phones'. 'Televisions' is not valid — use 'TVs'. " +
                 "For TVs, use query: 'smart TV' — it returns far more results than 'TV' alone. Avoid query: 'television'.",
             },
+            constraints: {
+              type: "object",
+              description:
+                "Hard spec requirements, verified per product against its attributes. Shape {name: {op: number}} with op eq, gte or lte; a range is {gte, lte}. " +
+                "Example: {\"memory_gb\": {\"gte\": 24}, \"storage_gb\": {\"gte\": 1000}, \"screen_in\": {\"eq\": 15}}. " +
+                "Names and units: memory_gb (RAM, GB), storage_gb (GB, 1TB = 1000), screen_in (inches), resolution_p (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), " +
+                "refresh_hz (Hz), power_w (W), wifi_gen (Wi-Fi generation: 6, 6E = 6.5, 7). " +
+                "Each result's constraint_status says matched, unverified or failed per name; unverified (unknown or conflicting) is never a match. Overrides the same spec written in query.",
+              properties: Object.fromEntries(
+                ["memory_gb", "storage_gb", "power_w", "refresh_hz", "resolution_p", "screen_in", "wifi_gen"].map((name) => [
+                  name,
+                  { type: "object", properties: { eq: { type: "number" }, gte: { type: "number" }, lte: { type: "number" } } },
+                ])
+              ),
+            },
             lite: {
               type: "boolean",
               description:
                 "Return trimmed product objects with only essential fields " +
-                "(id, title, brand, price, availability, image_url, purchase_url). " +
+                "(id, title, brand, price, availability, image_url, purchase_url, offer_count, constraint_status). " +
                 "Always set to true unless the user specifically needs full product objects.",
             },
             limit: {
@@ -234,6 +294,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description:
           "Get full details for a single product by ID. " +
           "Returns complete technical specifications including specs.description (full prose spec text with processor, RAM, storage, display, ports etc), " +
+          "and `attributes`: structured specs read from retailer titles, {name: {value, status, sources}} or {status: 'conflicting', values: [{value, sources}]}. " +
+          "Names and units as in the search constraints argument. status: 'confirmed' = two or more retailers state the same value; 'inferred' = one retailer's title states it; " +
+          "'conflicting' = retailers state different values (none is picked, tell the user they disagree); a missing name = unknown. " +
+          "specs.description is retailer prose and can describe another configuration, so it never overrides `attributes`. " +
           "pricing, stock level, delivery time, and all retailer offers with per-retailer pricing. " +
           "Accepts both canonical product IDs and original retailer offer IDs. " +
           "Use this after search_products to get detailed specs for comparison or recommendations. " +

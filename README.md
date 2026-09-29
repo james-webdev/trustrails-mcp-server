@@ -83,20 +83,43 @@ Search 26,000+ UK electronics products. Returns summary data (title, price, avai
 - `max_price` (number, optional) - Maximum price in GBP
 - `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
 - `category` (string, optional) - Filter by category: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers.
+- `constraints` (object, optional) - Hard spec requirements, verified per product against its `attributes`: `{"memory_gb":{"gte":24},"storage_gb":{"gte":1000},"screen_in":{"eq":15}}`. Operators `eq`, `gte`, `lte`; a range is `{"gte":..,"lte":..}`. Names and units: `memory_gb` (RAM, GB), `storage_gb` (GB, 1TB = 1000), `screen_in` (inches), `resolution_p` (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), `refresh_hz` (Hz), `power_w` (W), `wifi_gen` (Wi-Fi generation: 6, 6E = 6.5, 7). Wins over the same spec written in `query`. An unknown name or operator returns an error listing the valid ones. See [Structured specs](#structured-specs).
 - `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Always use for LLM integrations.
 - `limit` (number, optional) - Maximum products to return (default 50, max 100)
 - `sort` (string, optional) - Sort order: `relevance` (default), `price_asc` (cheapest first), `price_desc` (most expensive first). Use `price_asc` when comparing prices.
 
-**Returns:** Up to 50 products with summary data. With `lite: true`, returns only essential fields (id, title, brand, price, availability, image_url, purchase_url).
+**Returns:** Up to 50 products with summary data. With `lite: true`, returns only essential fields (id, title, brand, price, availability, image_url, purchase_url, offer_count, constraint_status).
 
 ### `get_product`
 
-Get full details for a single product. Returns complete technical specifications including `specs.description` (full prose spec text with processor, RAM, storage, display, ports, etc.), stock level, delivery time, and all retailer offers with per-retailer pricing. Use after `search_products` for detailed comparison or recommendations.
+Get full details for a single product. Returns complete technical specifications including `specs.description` (full prose spec text with processor, RAM, storage, display, ports, etc.), structured `attributes` (see [Structured specs](#structured-specs)), stock level, delivery time, and all retailer offers with per-retailer pricing. Use after `search_products` for detailed comparison or recommendations.
 
 **Parameters:**
 - `product_id` (string) - The product ID from search results
 
-**Returns:** Complete product with full specs (including `specs.description`), pricing across all retailers, and provenance information
+**Returns:** Complete product with full specs (including `specs.description`), structured `attributes`, pricing across all retailers, and provenance information
+
+### Structured specs
+
+`get_product` returns `attributes`: structured specs read from retailer titles when the catalogue is imported, next to the untouched `specs`. Each has a `status`, and a spec nobody states is absent (unknown):
+
+- `confirmed`: two or more retailers state the same value.
+- `inferred`: one retailer's title states it.
+- `conflicting`: retailers state different values. None is picked; the values are listed with their retailers.
+
+`specs.description` is retailer prose and can describe another configuration; it never overrides `attributes`.
+
+```json
+{
+  "memory_gb": { "status": "confirmed", "value": 24,
+    "sources": [{ "retailer": "Back to the Office", "field": "title" }, { "retailer": "AO.com", "field": "title" }] },
+  "storage_gb": { "status": "conflicting", "values": [
+    { "value": 256, "sources": [{ "retailer": "Laptops Direct", "field": "title" }] },
+    { "value": 512, "sources": [{ "retailer": "JoyBuy", "field": "title" }] } ] }
+}
+```
+
+Searches with `constraints` return the constraints applied, `excluded_by_constraints`, and a `constraint_status` on each product: `matched` (its attribute meets the constraint) or `unverified` (unknown or conflicting: never treat as a match; confirm with `get_product`). Products whose attribute fails a constraint are left out. Specs written in `query` ("2TB", "16GB RAM", "144Hz") are checked the same way.
 
 ---
 
@@ -124,6 +147,12 @@ Search across **26,000+ electronics products** from major UK retailers including
 ```
 "Show me cheap monitors"
 → category='Monitors', max_price=200, lite=true
+```
+
+**Spec requirements:**
+```
+"A 15 inch laptop with at least 24GB RAM and 1TB storage"
+→ category='Laptops', constraints={"memory_gb":{"gte":24},"storage_gb":{"gte":1000},"screen_in":{"eq":15}}, lite=true
 ```
 
 **Detailed specs:**
