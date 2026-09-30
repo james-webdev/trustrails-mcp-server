@@ -30,21 +30,13 @@ interface SearchParams {
   sort?: string;
 }
 
-/** Hard spec requirements, e.g. { memory_gb: { gte: 24 } }; a range is { gte, lte }. Names are validated by the API. */
 type SpecConstraints = Record<string, Partial<Record<"eq" | "gte" | "lte", number>>>;
 
-/** Where a stated value came from. */
 interface AttributeSource {
   retailer: string;
   field: "title";
 }
 
-/**
- * One structured spec of a product, with the evidence for it. confirmed: two or
- * more retailers state the same value. inferred: one retailer does. conflicting:
- * retailers state different values, and none is picked. A spec nobody states is
- * absent, which reads as unknown.
- */
 type Attribute =
   | { status: "confirmed" | "inferred"; value: number; sources: AttributeSource[] }
   | { status: "conflicting"; values: Array<{ value: number; sources: AttributeSource[] }> };
@@ -73,16 +65,14 @@ interface Product {
     last_updated: string;
   };
   purchase_url: string;
-  attributes?: Attributes; // structured specs read from retailer titles (get_product, and constrained searches)
-  constraint_status?: Record<string, "matched" | "unverified" | "failed">; // per spec constraint in the search
+  attributes?: Attributes;
+  constraint_status?: Record<string, "matched" | "unverified" | "failed">;
 }
 
 interface SearchResponse {
   products: Product[];
   total: number;
-  /** The constraints applied, only when there were any. */
   constraints?: SpecConstraints;
-  /** Products left out because their attribute states a value that fails a constraint. */
   excluded_by_constraints?: number;
 }
 
@@ -150,7 +140,7 @@ async function searchProducts(params: SearchParams): Promise<SearchResponse> {
   });
 
   if (!response.ok) {
-    // A bad constraints argument comes back as 400 {error} naming the valid names or operators
+    // A bad constraints argument comes back as 400 {error}
     if (response.status === 400) {
       const body = await response.json().catch(() => null) as { error?: string } | null;
       if (body?.error) throw new Error(`Search failed: ${body.error}`);
