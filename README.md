@@ -83,7 +83,7 @@ Search 26,000+ UK electronics products. Returns summary data (title, price, avai
 - `max_price` (number, optional) - Maximum price in GBP
 - `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
 - `category` (string, optional) - Filter by category: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers.
-- `constraints` (object, optional) - Hard spec requirements, verified per product against its `attributes`: `{"memory_gb":{"gte":24},"storage_gb":{"gte":1000},"screen_in":{"eq":15}}`. Operators `eq`, `gte`, `lte`; a range is `{"gte":..,"lte":..}`. Names and units: `memory_gb` (RAM, GB), `storage_gb` (GB, 1TB = 1000), `screen_in` (inches), `resolution_p` (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), `refresh_hz` (Hz), `power_w` (W), `wifi_gen` (Wi-Fi generation: 6, 6E = 6.5, 7). Wins over the same spec written in `query`. An unknown name or operator returns an error listing the valid ones. See [Structured specs](#structured-specs).
+- `constraints` (object, optional) - Hard spec requirements, verified per product against its `attributes`: `{"memory_gb":{"gte":24},"storage_gb":{"gte":1000},"screen_in":{"eq":15}}`. Operators `eq`, `gte`, `lte`; a range is `{"gte":..,"lte":..}`. Names and units: `memory_gb` (RAM, GB), `storage_gb` (GB, 1TB = 1000), `screen_in` (inches), `resolution_p` (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), `refresh_hz` (Hz), `power_w` (W), `wifi_gen` (Wi-Fi generation: 6, 6E = 6.5, 7). Sizes allow marketing slack on every operator (`gte 1024` accepts a 1TB drive). Wins over the same spec written in `query`. A bad request (unknown name or operator, negative value, `gte` above `lte`) returns an error listing the valid ones. See [Structured specs](#structured-specs).
 - `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Always use for LLM integrations.
 - `limit` (number, optional) - Maximum products to return (default 50, max 100)
 - `sort` (string, optional) - Sort order: `relevance` (default), `price_asc` (cheapest first), `price_desc` (most expensive first). Use `price_asc` when comparing prices.
@@ -109,17 +109,22 @@ Get full details for a single product. Returns complete technical specifications
 
 `specs.description` is retailer prose and can describe another configuration; it never overrides `attributes`.
 
+For one Galaxy S26 Ultra, where one retailer states 12GB of RAM and two disagree about its storage:
+
 ```json
 {
-  "memory_gb": { "status": "confirmed", "value": 24,
-    "sources": [{ "retailer": "Back to the Office", "field": "title" }, { "retailer": "AO.com", "field": "title" }] },
+  "memory_gb": { "status": "inferred", "value": 12,
+    "sources": [{ "retailer": "JoyBuy", "field": "title" }] },
   "storage_gb": { "status": "conflicting", "values": [
     { "value": 256, "sources": [{ "retailer": "Laptops Direct", "field": "title" }] },
     { "value": 512, "sources": [{ "retailer": "JoyBuy", "field": "title" }] } ] }
 }
 ```
 
-Searches with `constraints` return the constraints applied, `excluded_by_constraints`, and a `constraint_status` on each product: `matched` (its attribute meets the constraint) or `unverified` (unknown or conflicting: never treat as a match; confirm with `get_product`). Products whose attribute fails a constraint are left out. Specs written in `query` ("2TB", "16GB RAM", "144Hz") are checked the same way.
+Searches with constraints return the constraints applied, `excluded_by_constraints`, and a `constraint_status` on each product: `matched` (its attribute meets the constraint) or `unverified` (unknown or conflicting: never treat as a match, tell the user it is unconfirmed). Products whose attribute fails a constraint are left out.
+
+- **Specs in `query`:** only a spec that says what it is counts ("24GB RAM", "1TB", "512GB SSD", "144Hz", `55"`). A bare "24GB" stays a search word. Memory, storage, refresh rate, wattage, resolution and Wi-Fi mean at least; screen size means that size.
+- **Candidate window:** constraints are checked on up to 2,000 candidate products. When more matched, the response has `candidates_truncated: true`: narrow by `brand` or `category` and search again before concluding that nothing matches.
 
 ---
 

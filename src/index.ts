@@ -30,7 +30,11 @@ interface SearchParams {
   sort?: string;
 }
 
-type SpecConstraints = Record<string, Partial<Record<"eq" | "gte" | "lte", number>>>;
+type Op = "eq" | "gte" | "lte";
+
+type SpecConstraints = Record<string, Partial<Record<Op, number>>>;
+
+type ConstraintStatus = "matched" | "unverified";
 
 interface AttributeSource {
   retailer: string;
@@ -66,7 +70,7 @@ interface Product {
   };
   purchase_url: string;
   attributes?: Attributes;
-  constraint_status?: Record<string, "matched" | "unverified" | "failed">;
+  constraint_status?: Record<string, ConstraintStatus>;
 }
 
 interface SearchResponse {
@@ -74,6 +78,7 @@ interface SearchResponse {
   total: number;
   constraints?: SpecConstraints;
   excluded_by_constraints?: number;
+  candidates_truncated?: boolean;
 }
 
 // Create server instance
@@ -202,13 +207,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "For simple browsing, search with lite=true is sufficient. " +
           "For specs the constraints cannot check (ports, weight, battery), ALWAYS search first, then call get_product on the top 3-5 results and validate against the full specs before recommending. " +
           "Do not assume technical specs from titles alone. If specs are missing, state that explicitly. " +
-          "SPEC REQUIREMENTS: pass hard requirements in `constraints` (memory_gb, storage_gb, screen_in, resolution_p, refresh_hz, power_w, wifi_gen; see its description) instead of query text. " +
-          "They are verified against each product's `attributes`, not just searched, and win over specs written in query (2TB, 100W, 4K, 144Hz, 55\", Wi-Fi 7, 16GB RAM). " +
-          "When present, the response has `constraints` (what was applied, e.g. {memory_gb: {gte: 24}}) and every product has `constraint_status`. " +
-          "'matched' = the product's attribute states a value that meets it. 'unverified' = the attribute is unknown or conflicting: confirm with get_product before saying it meets the requirement. " +
-          "Products whose attribute states a value that fails a constraint are left out and counted in `excluded_by_constraints`. " +
-          "A returned product is only RELATED to the request; only 'matched' means verified. Never treat 'unverified' as a match, and never tell the user a product meets a requirement because it was returned. " +
-          "Matched results come first, also with sort='price_asc'. If none are matched, say that no verified match was found and offer the unverified ones only as unconfirmed. " +
+          "SPEC REQUIREMENTS: put exact requirements in `constraints` (names and units in its description), not in query. They are verified against each product's `attributes`. " +
+          "A spec written in query only counts when it says what it is ('24GB RAM', '1TB', '144Hz', '55\"'); a bare '24GB' stays a search word. Memory, storage and speeds mean at least, screen size means that size. " +
+          "When constraints apply, the response has `constraints` (what was applied) and every product has `constraint_status` per name: " +
+          "'matched' = the product's attribute states a value that meets it. 'unverified' = the attribute is unknown or retailers disagree. " +
+          "Never treat 'unverified' as a match and never say a product meets a requirement because it was returned: tell the user it is unconfirmed. " +
+          "Products that state a value that fails are left out and counted in `excluded_by_constraints`. Matched results come first, also with sort='price_asc'. " +
+          "If none is matched, say no verified match was found and offer the unverified ones only as unconfirmed. " +
+          "If `candidates_truncated` is true, only 2,000 of the matching products were checked: narrow by brand or category and search again before saying nothing matches. " +
           "STOCK AVAILABILITY: When a product is availability: out_of_stock, do not recommend it as a purchase. Instead mention it as a notable alternative — especially if it offers a meaningful price advantage — and suggest the user check back. Example: 'This model is £X cheaper at [retailer] but currently out of stock — worth checking back if you're not in a rush.' Never silently omit out-of-stock results; surface them transparently.",
         inputSchema: {
           type: "object",
@@ -217,7 +223,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description:
                 "Refinement terms after brand and category are extracted. Use for model lines, series names, variants, or model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5'), " +
-                "and spec requirements written with their unit (e.g. '2TB', '100W', '4K', '144Hz', '55\"', 'Wi-Fi 7', '16GB RAM'), which are verified per result (see constraint_status); prefer the constraints argument for these. " +
+                "and, if not passed in constraints, specs that say what they are (e.g. '24GB RAM', '1TB', '100W', '4K', '144Hz', '55\"', 'Wi-Fi 7'). " +
                 "DO NOT include brand names, product family names, or prices — use filters. " +
                 "Omit entirely if brand + category fully describe what the user wants.",
             },
@@ -250,10 +256,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "object",
               description:
                 "Hard spec requirements, verified per product against its attributes. Shape {name: {op: number}} with op eq, gte or lte; a range is {gte, lte}. " +
+                "Sizes allow marketing slack: gte 1024 accepts a 1TB drive, eq 22 a 21.5\" screen. " +
                 "Example: {\"memory_gb\": {\"gte\": 24}, \"storage_gb\": {\"gte\": 1000}, \"screen_in\": {\"eq\": 15}}. " +
                 "Names and units: memory_gb (RAM, GB), storage_gb (GB, 1TB = 1000), screen_in (inches), resolution_p (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), " +
                 "refresh_hz (Hz), power_w (W), wifi_gen (Wi-Fi generation: 6, 6E = 6.5, 7). " +
-                "Each result's constraint_status says matched, unverified or failed per name; unverified (unknown or conflicting) is never a match. Overrides the same spec written in query.",
+                "Each result's constraint_status is matched or unverified per name. Overrides the same spec written in query.",
               properties: Object.fromEntries(
                 ["memory_gb", "storage_gb", "power_w", "refresh_hz", "resolution_p", "screen_in", "wifi_gen"].map((name) => [
                   name,
@@ -288,7 +295,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "Names and units as in the search constraints argument. status: 'confirmed' = two or more retailers state the same value; 'inferred' = one retailer's title states it; " +
           "'conflicting' = retailers state different values (none is picked, tell the user they disagree); a missing name = unknown. " +
           "specs.description is retailer prose and can describe another configuration, so it never overrides `attributes`. " +
-          "pricing, stock level, delivery time, and all retailer offers with per-retailer pricing. " +
+          "It also returns pricing, stock level, delivery time, and all retailer offers with per-retailer pricing. " +
           "Accepts both canonical product IDs and original retailer offer IDs. " +
           "Use this after search_products to get detailed specs for comparison or recommendations. " +
           "Always call this when a user needs precise product attributes, compatibility info, side-by-side comparisons, or price comparison across retailers.",
