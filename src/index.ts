@@ -36,7 +36,6 @@ interface Product {
   price: number;
   currency: string;
   availability: string;
-  stock: number;
   delivery_time: string;
   image_url?: string;
   category: string;
@@ -234,7 +233,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description:
           "Get full details for a single product by ID. " +
           "Returns complete technical specifications including specs.description (full prose spec text with processor, RAM, storage, display, ports etc), " +
-          "pricing, stock level, delivery time, and all retailer offers with per-retailer pricing. " +
+          "pricing, availability, delivery time, and all retailer offers with per-retailer pricing. " +
           "Accepts both canonical product IDs and original retailer offer IDs. " +
           "Use this after search_products to get detailed specs for comparison or recommendations. " +
           "Always call this when a user needs precise product attributes, compatibility info, side-by-side comparisons, or price comparison across retailers.",

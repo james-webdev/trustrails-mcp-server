@@ -91,7 +91,7 @@ Search 26,000+ UK electronics products. Returns summary data (title, price, avai
 
 ### `get_product`
 
-Get full details for a single product. Returns complete technical specifications including `specs.description` (full prose spec text with processor, RAM, storage, display, ports, etc.), stock level, delivery time, and all retailer offers with per-retailer pricing. Use after `search_products` for detailed comparison or recommendations.
+Get full details for a single product. Returns complete technical specifications including `specs.description` (full prose spec text with processor, RAM, storage, display, ports, etc.), availability, delivery time, and all retailer offers with per-retailer pricing. Use after `search_products` for detailed comparison or recommendations.
 
 **Parameters:**
 - `product_id` (string) - The product ID from search results
