@@ -204,7 +204,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "   Example: 'Sony WH-1000XM5' → brand='Sony', category='Headphones', query='WH-1000XM5'. " +
           "2) DO NOT put brand names, product family names, full product name strings, or prices in the query — use filters. DO put differentiating identifiers: model lines, series, variants, technology descriptors, and model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5', 's25 ultra'). Any product family name uniquely associated with a brand (e.g. MacBook→Apple, Galaxy→Samsung, ThinkPad→Lenovo) is already implied by brand+category — never put it in query. BAD: query='macbook neo' → GOOD: brand='Apple', category='Laptops', query='neo'. " +
           "3) If brand + category alone fully describe what the user wants, omit the query entirely — fewer query words gives cleaner results. " +
-          "Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB', '4K'), which are ignored when finding products and only rank them. Put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. Leave out use-case words like gaming, cheap or best. " +
+          "Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB'), which are ignored when finding products and only rank them. Put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. Leave out use-case words like gaming, cheap or best. " +
           "4) Always set lite=true to reduce payload size. " +
           "5) If 0 results, try a shorter/broader query or drop filters (but never present a near miss as meeting a requirement). " +
           "6) Use get_product for a product's attributes, description and every offer — do not rely on search results for detailed attributes. " +
@@ -218,7 +218,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "Never treat 'unverified' as a match or say a product meets a requirement because it was returned: tell the user it is unconfirmed. " +
           "Products whose stated value fails are left out (`excluded_by_constraints`). Matched results come first, also with sort='price_asc'. " +
           "To say how many products matched, use `matched_total`, not `total`. If it is 0, say no product is known to meet every requirement and offer the unverified ones only as unconfirmed. " +
-          "With lite=true, `attributes` holds only the constrained names, as {status, value}: state the value from there, and call get_product for the rest. " +
+          "With lite=true, `attributes` holds only the constrained names, as {status, value} or {status, values} when conflicting: state the value from there, and call get_product for the rest. " +
           "If `candidates_truncated` is true, the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again before saying nothing matches. If the search was already narrowed, tell the user the results may be incomplete. " +
           "STOCK AVAILABILITY: When a product is availability: out_of_stock, do not recommend it as a purchase. Instead mention it as a notable alternative — especially if it offers a meaningful price advantage — and suggest the user check back. Example: 'This model is £X cheaper at [retailer] but currently out of stock — worth checking back if you're not in a rush.' Never silently omit out-of-stock results; surface them transparently.",
         inputSchema: {
@@ -228,7 +228,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description:
                 "Refinement terms after brand and category are extracted. Use for model lines, series names, variants, or model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5'). " +
-                "Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB', '4K'), which are ignored when finding products and only rank them: put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. " +
+                "Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB'), which are ignored when finding products and only rank them: put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. " +
                 "DO NOT include brand names, product family names, or prices — use filters. " +
                 "Omit entirely if brand + category fully describe what the user wants.",
             },
