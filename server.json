@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "app.trustrails/server",
-  "description": "Search UK electronics products across retailers. Real-time prices, stock, and specs.",
+  "description": "Search UK electronics products across retailers: prices, stock and specs, refreshed twice a day.",
   "repository": {
     "url": "https://github.com/james-webdev/trustrails-mcp-server",
     "source": "github"
@@ -14,7 +14,16 @@
       "version": "1.0.7",
       "transport": {
         "type": "stdio"
-      }
+      },
+      "environmentVariables": [
+        {
+          "name": "TRUSTRAILS_API_KEY",
+          "description": "Optional TrustRails API key. If unset, the server uses the shared public key, which is rate-limited.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
     }
   ]
 }
