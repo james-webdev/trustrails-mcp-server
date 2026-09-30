@@ -46,8 +46,8 @@ interface AttributeSource {
 }
 
 type Attribute =
-  | { status: "confirmed" | "inferred"; value: number; sources: AttributeSource[] }
-  | { status: "conflicting"; values: Array<{ value: number; sources: AttributeSource[] }> };
+  | { status: "confirmed" | "inferred"; value: number; sources?: AttributeSource[] }
+  | { status: "conflicting"; values: Array<{ value: number; sources?: AttributeSource[] }> };
 
 type Attributes = Partial<Record<ConstraintName, Attribute>>;
 
@@ -192,11 +192,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description:
           "Search 26,000+ deduplicated UK electronics products across multiple retailers with price comparison. " +
           "Returns summary data: title, brand, price, availability, category, purchase link, and offer_count. " +
-          "When offer_count > 1, the product is available from multiple retailers — call get_product to see all offers. " +
+          "When offer_count > 1, the product is available from multiple retailers — call get_product for the 1-3 products you will recommend, not for every result, to see all offers. " +
           "Searches that pass constraints add constraint_status and the constrained attributes; for every attribute, the retailer's description and all offers, call get_product with the product ID. " +
           "Only compare prices and claim savings between offers of the same configuration: if any attribute is `conflicting`, check offers[].title first and never claim a saving between different sizes or configurations. " +
-          "Covers: Laptops, Desktops, Phones, Tablets, Headphones, Monitors, TVs, Cameras, Keyboards, Mice, Speakers, Gaming, " +
-          "Wearables, Printers, Networking, Storage, Audio, Drones, Cables & Chargers. " +
           "All prices in GBP. " +
           "IMPORTANT RULES: " +
           "1) Decompose the user's request: extract brand → brand filter, category → category filter, price → price filters, RAM/storage/screen size/resolution/refresh rate/wattage/Wi-Fi generation → constraints. What remains is the query. " +
@@ -206,23 +204,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "   Example: 'Sony WH-1000XM5' → brand='Sony', category='Headphones', query='WH-1000XM5'. " +
           "2) DO NOT put brand names, product family names, full product name strings, or prices in the query — use filters. DO put differentiating identifiers: model lines, series, variants, technology descriptors, and model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5', 's25 ultra'). Any product family name uniquely associated with a brand (e.g. MacBook→Apple, Galaxy→Samsung, ThinkPad→Lenovo) is already implied by brand+category — never put it in query. BAD: query='macbook neo' → GOOD: brand='Apple', category='Laptops', query='neo'. " +
           "3) If brand + category alone fully describe what the user wants, omit the query entirely — fewer query words gives cleaner results. " +
+          "Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB', '4K'), which are ignored when finding products and only rank them. Put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. Leave out use-case words like gaming, cheap or best. " +
           "4) Always set lite=true to reduce payload size. " +
           "5) If 0 results, try a shorter/broader query or drop filters (but never present a near miss as meeting a requirement). " +
           "6) Use get_product for a product's attributes, description and every offer — do not rely on search results for detailed attributes. " +
           "AI USAGE PROTOCOL: " +
           "For simple browsing, search with lite=true is sufficient. " +
           "For specs not in `attributes` (ports, weight, battery), ALWAYS search first, then call get_product on the top 3-5 results and validate against the description before recommending; don't guess them from titles. If specs are missing, state that explicitly. " +
-          "SPEC REQUIREMENTS: put exact requirements in `constraints` (names and units in its description), not in query, and always set `category` (and brand if known) with them: a search of only specs, with no category, brand or search words, is rejected. " +
+          "SPEC REQUIREMENTS: put exact requirements in `constraints`, not in query, and always set `category` (and brand if known) with them: a search of only specs, with no category, brand or search words, is rejected. " +
           "If a requirement is ambiguous (e.g. '16GB' could be RAM or storage), ask the user or search without that constraint. " +
-          "A spec written in query only counts when it says what it is ('24GB RAM', '1TB', '144Hz', '55\"'); a bare '24GB' stays a search word. It means at least for memory, storage, resolution, refresh rate, power and Wi-Fi generation; screen size means that size. " +
-          "Storage matches within 3% (1TB = 1000-1024GB) and screen size within 0.5 inch; other specs exactly. " +
-          "When constraints apply, the response has `constraints` (what was applied) and every product has `constraint_status` per name: " +
-          "'matched' = a retailer's title states a value that meets it. 'unverified' = the value is unknown or retailers disagree. " +
-          "Never treat 'unverified' as a match and never say a product meets a requirement because it was returned: tell the user it is unconfirmed. " +
-          "Products whose stated value fails a constraint are left out and counted in `excluded_by_constraints`. Matched results come first, also with sort='price_asc'. " +
-          "`total` counts the products checked and not left out (matched plus unverified) and `matched_total` how many of them match every constraint: never say 'N products match' from `total`. " +
-          "With lite=true, each result's `attributes` holds only the constrained names, so state the value from there; call get_product for the rest. " +
-          "If `matched_total` is 0, say no product is known to meet every requirement and offer the unverified ones only as unconfirmed. " +
+          "With constraints, every product has `constraint_status` per name: " +
+          "'matched' = a retailer's title states a value that meets it. 'unverified' = not known to meet it: check `attributes[name]`, where `conflicting` means retailers disagree and missing means unknown. " +
+          "Never treat 'unverified' as a match or say a product meets a requirement because it was returned: tell the user it is unconfirmed. " +
+          "Products whose stated value fails are left out (`excluded_by_constraints`). Matched results come first, also with sort='price_asc'. " +
+          "To say how many products matched, use `matched_total`, not `total`. If it is 0, say no product is known to meet every requirement and offer the unverified ones only as unconfirmed. " +
+          "With lite=true, `attributes` holds only the constrained names, as {status, value}: state the value from there, and call get_product for the rest. " +
           "If `candidates_truncated` is true, the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again before saying nothing matches. If the search was already narrowed, tell the user the results may be incomplete. " +
           "STOCK AVAILABILITY: When a product is availability: out_of_stock, do not recommend it as a purchase. Instead mention it as a notable alternative — especially if it offers a meaningful price advantage — and suggest the user check back. Example: 'This model is £X cheaper at [retailer] but currently out of stock — worth checking back if you're not in a rush.' Never silently omit out-of-stock results; surface them transparently.",
         inputSchema: {
@@ -232,7 +228,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description:
                 "Refinement terms after brand and category are extracted. Use for model lines, series names, variants, or model numbers (e.g. 'neo', 'ultra', 'oled', 'qled', 'WH-1000XM5'). " +
-                "Every query word must appear in the title, so leave out use-case words like gaming, cheap or best. " +
+                "Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB', '4K'), which are ignored when finding products and only rank them: put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. " +
                 "DO NOT include brand names, product family names, or prices — use filters. " +
                 "Omit entirely if brand + category fully describe what the user wants.",
             },
@@ -268,7 +264,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 "Example: {\"memory_gb\": {\"gte\": 24}, \"storage_gb\": {\"gte\": 1000}, \"screen_in\": {\"eq\": 15}}. " +
                 "Names and units: memory_gb (RAM, GB), storage_gb (GB, 1TB = 1000), screen_in (inches), resolution_p (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), " +
                 "refresh_hz (Hz), power_w (W), wifi_gen (Wi-Fi generation: 6, 6E = 6.5, 7). " +
-                "Each result's constraint_status is matched or unverified per name. Overrides the same spec written in query.",
+                "A spec written in query counts only when it says what it is ('24GB RAM', '1TB', '144Hz', '55\"') and means at least, except screen size (that size); a bare '24GB' stays a search word. Explicit constraints win over it.",
               properties: Object.fromEntries(
                 CONSTRAINT_NAMES.map((name) => [
                   name,
@@ -280,7 +276,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "boolean",
               description:
                 "Return trimmed product objects with only essential fields " +
-                "(id, title, brand, price, currency, availability, image_url, purchase_url, offer_count and, with constraints, constraint_status and the attributes of the constrained names). " +
+                "(id, title, brand, price, currency, availability, image_url, purchase_url, offer_count and, with constraints, constraint_status and the status and value of the constrained names). " +
                 "Always set to true unless the user specifically needs full product objects.",
             },
             limit: {

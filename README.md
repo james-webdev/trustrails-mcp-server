@@ -78,7 +78,7 @@ Claude will search across multiple UK retailers and show you:
 Search 26,000+ UK electronics products. Returns summary data (title, price, availability, category). For a product's structured `attributes`, the retailer's description and every offer, use `get_product`.
 
 **Parameters:**
-- `query` (string) - Refinement terms after brand and category are extracted: model lines, series, variants, technology descriptors, or model numbers (e.g., "neo", "ultra", "oled", "WH-1000XM5"). Omit entirely if brand + category alone describe what's needed. Never put brand names, product family names, or prices here — use filters.
+- `query` (string) - Refinement terms after brand and category are extracted: model lines, series, variants, technology descriptors, or model numbers (e.g., "neo", "ultra", "oled", "WH-1000XM5"). Omit entirely if brand + category alone describe what's needed. Never put brand names, product family names, or prices here — use filters. Query words must appear in the title, except words naming the category ("router" in Networking) and bare numbers or specs ("4070", "16GB", "4K"), which are ignored when finding products and only rank them: put a model number with its prefix ("RTX 4070", not "4070") and check each title for it.
 - `min_price` (number, optional) - Minimum price in GBP
 - `max_price` (number, optional) - Maximum price in GBP
 - `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
@@ -121,12 +121,12 @@ For one Galaxy S26 Ultra, where only JoyBuy states the RAM (12GB) and two retail
 }
 ```
 
-Searches with constraints return the constraints applied, `excluded_by_constraints`, `matched_total`, and a `constraint_status` on each product: `matched` (a retailer's title states a value that meets the constraint) or `unverified` (unknown or conflicting: never treat as a match, tell the user it is unconfirmed). Products whose stated value fails a constraint are left out. A lite result also carries the `attributes` of just the constrained names, so a 64GB laptop is told apart from a 16GB one.
+Searches with constraints return the constraints applied, `excluded_by_constraints`, `matched_total`, and a `constraint_status` on each product: `matched` (a retailer's title states a value that meets the constraint) or `unverified` (not known to meet it: never treat as a match, tell the user it is unconfirmed; check `attributes[name]`, where `conflicting` means retailers disagree and missing means unknown). Products whose stated value fails a constraint are left out. A lite result also carries the `status` and value of just the constrained names, without `sources`, so a 64GB laptop is told apart from a 16GB one and disagreeing from unknown.
 
 - **Tolerance:** storage within 3% (1TB = 1000–1024GB) and screen size within 0.5 inch, on every operator; other specs, memory included, are exact.
 - **Specs in `query`:** only a spec that says what it is counts ("24GB RAM", "1TB", "512GB SSD", "144Hz", `55"`). A bare "24GB" stays a search word. Memory, storage, resolution, refresh rate, power and Wi-Fi mean at least; screen size means that size.
 - **With only specs:** a search with no category, brand or search words is rejected rather than checking an arbitrary 2,000 products. If a requirement is ambiguous (a bare "16GB" could be RAM or storage), ask the user or search without that constraint.
-- **`total`:** with constraints it counts the candidates checked and not left out (matched plus unverified). `matched_total` counts those where every constraint matched.
+- **`total`:** with constraints it counts the candidates checked and not left out (matched plus unverified). `matched_total` counts those where every constraint matched: use it, not `total`, to say how many matched.
 - **Candidate window:** constraints are checked on the first 2,000 candidates in the chosen sort order. If more exist, the response has `candidates_truncated: true`: add a `brand` or `category`, or a narrower `query`, and search again before concluding that nothing matches. If the search was already narrowed, the results may be incomplete.
 
 ---
