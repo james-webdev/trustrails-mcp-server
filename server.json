@@ -6,12 +6,12 @@
     "url": "https://github.com/james-webdev/trustrails-mcp-server",
     "source": "github"
   },
-  "version": "1.0.24",
+  "version": "1.0.25",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@trustrails/mcp-server",
-      "version": "1.0.24",
+      "version": "1.0.25",
       "transport": {
         "type": "stdio"
       },
