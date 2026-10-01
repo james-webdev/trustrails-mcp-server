@@ -82,7 +82,7 @@ interface SearchResponse {
   total: number;
   constraints?: SpecConstraints;
   excluded_by_constraints?: number;
-  matched_total?: number;
+  unverified_total?: number;
   candidates_truncated?: boolean;
 }
 
@@ -217,7 +217,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "'matched' = a retailer's title states a value that meets it. 'unverified' = not known to meet it: check `attributes[name]`, where `conflicting` means retailers disagree and missing means unknown. " +
           "Never treat 'unverified' as a match or say a product meets a requirement because it was returned: tell the user it is unconfirmed. " +
           "Products whose stated value fails are left out (`excluded_by_constraints`). Matched results come first, also with sort='price_asc'. " +
-          "To say how many products matched, use `matched_total`, not `total`. If it is 0, say no product is known to meet every requirement and offer the unverified ones only as unconfirmed. " +
+          "With constraints, `total` counts the products that match every constraint and `unverified_total` the unverified products that passed the other filters (only some may be in `products`). If `total` is 0, say no product is known to meet every requirement and offer the unverified ones only as unconfirmed. " +
           "With lite=true, `attributes` holds only the constrained names, as {status, value} or {status, values} when conflicting: state the value from there, and call get_product for the rest. " +
           "If `candidates_truncated` is true, the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again before saying nothing matches. If the search was already narrowed, tell the user the results may be incomplete. " +
           "STOCK AVAILABILITY: When a product is availability: out_of_stock, do not recommend it as a purchase. Instead mention it as a notable alternative — especially if it offers a meaningful price advantage — and suggest the user check back. Example: 'This model is £X cheaper at [retailer] but currently out of stock — worth checking back if you're not in a rush.' Never silently omit out-of-stock results; surface them transparently.",
@@ -260,7 +260,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "object",
               description:
                 "Hard spec requirements, checked per product against its attributes. Shape {name: {op: number}} with op eq, gte or lte; a range is {gte, lte}. " +
-                "On every operator, storage matches within 3% and screen size within 0.5 inch; other specs exactly: gte 1024 accepts a 1TB drive, eq 22 a 21.5\" screen. " +
+                "On every operator, storage matches within 3% and screen size within 0.5 inch; a whole-number screen size N also covers up to N+1 on eq and lte (gte is unchanged); other specs exactly: gte 1024 accepts a 1TB drive, eq 22 a 21.5\" screen, eq 13 a 13.6\" one, lte 15 a 15.6\" one. " +
                 "Example: {\"memory_gb\": {\"gte\": 24}, \"storage_gb\": {\"gte\": 1000}, \"screen_in\": {\"eq\": 15}}. " +
                 "Names and units: memory_gb (RAM, GB), storage_gb (GB, 1TB = 1000), screen_in (inches), resolution_p (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), " +
                 "refresh_hz (Hz), power_w (W), wifi_gen (Wi-Fi generation: 6, 6E = 6.5, 7). " +
