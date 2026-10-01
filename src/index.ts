@@ -260,7 +260,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "object",
               description:
                 "Hard spec requirements, checked per product against its attributes. Shape {name: {op: number}} with op eq, gte or lte; a range is {gte, lte}. " +
-                "On every operator, storage matches within 3% and screen size within 0.5 inch; other specs exactly: gte 1024 accepts a 1TB drive, eq 22 a 21.5\" screen. " +
+                "On every operator, storage matches within 3% and screen size within 0.5 inch; a whole-number screen size N also covers up to N+1 on eq and lte (gte is unchanged); other specs exactly: gte 1024 accepts a 1TB drive, eq 22 a 21.5\" screen, eq 13 a 13.6\" one, lte 15 a 15.6\" one. " +
                 "Example: {\"memory_gb\": {\"gte\": 24}, \"storage_gb\": {\"gte\": 1000}, \"screen_in\": {\"eq\": 15}}. " +
                 "Names and units: memory_gb (RAM, GB), storage_gb (GB, 1TB = 1000), screen_in (inches), resolution_p (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), " +
                 "refresh_hz (Hz), power_w (W), wifi_gen (Wi-Fi generation: 6, 6E = 6.5, 7). " +
