@@ -75,29 +75,29 @@ Claude will search across multiple UK retailers and show you:
 
 ### `search_products`
 
-Search 26,000+ UK electronics products. Returns summary data (title, price, availability, category). For a product's structured `attributes`, the retailer's description and every offer, use `get_product`.
+Search 26,000+ UK electronics products across 7 retailers with price comparison. Prices are in GBP. The tool text tells the assistant to split the request into filters first: brand, category and price go in their own arguments, RAM, storage, screen size, resolution, refresh rate, wattage and Wi-Fi generation go in `constraints`, and only what is left over goes in `query`.
 
 **Parameters:**
-- `query` (string) - Refinement terms after brand and category are extracted: model lines, series, variants, technology descriptors, or model numbers (e.g., "neo", "ultra", "oled", "WH-1000XM5"). Omit entirely if brand + category alone describe what's needed. Never put brand names, product family names, or prices here — use filters. Query words must appear in the title, except words naming the category ("router" in Networking) and bare numbers or specs ("4070", "16GB"), which are ignored when finding products and only rank them: put a model number with its prefix ("RTX 4070", not "4070") and check each title for it.
-- `min_price` (number, optional) - Minimum price in GBP
-- `max_price` (number, optional) - Maximum price in GBP
-- `brand` (string, optional) - Filter by brand, exact match (e.g., "Sony", "HP", "Apple")
-- `category` (string, optional) - Filter by category: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers.
-- `constraints` (object, optional) - Hard spec requirements, checked per product against its `attributes`: `{"memory_gb":{"gte":24},"storage_gb":{"gte":1000},"screen_in":{"eq":15}}`. Operators `eq`, `gte`, `lte`; a range is `{"gte":..,"lte":..}`. Names and units: `memory_gb` (RAM, GB), `storage_gb` (GB, 1TB = 1000), `screen_in` (inches), `resolution_p` (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), `refresh_hz` (Hz), `power_w` (W), `wifi_gen` (Wi-Fi generation: 6, 6E = 6.5, 7). On every operator, storage matches within 3% (1TB = 1000–1024GB) and screen size within 0.5 inch; a whole-number screen size N also covers up to N+1 on `eq` and `lte` (`gte` is unchanged); other specs exactly. Wins over the same spec written in `query`. Always set a `category` or `brand` with it. A bad request (unknown name or operator, negative value, a combination nothing can meet such as `gte` above `lte`, or constraints with no category, brand or search words) returns an error listing the valid ones. See [Structured specs](#structured-specs).
-- `lite` (boolean, optional) - Return trimmed product objects (reduces payload by ~80%). Always use for LLM integrations.
-- `limit` (number, optional) - Maximum products to return (default 50, max 100)
-- `sort` (string, optional) - Sort order: `relevance` (default), `price_asc` (in stock first, then cheapest), `price_desc` (in stock first, then most expensive). Use `price_asc` when comparing prices. With constraints, matched products still come first.
+- `query` (string, optional) - Refinement terms ONLY: model lines, series, variants, model numbers (e.g. 'neo', 'ultra', 'oled', 'WH-1000XM5', 's25 ultra'). Never a category name (BAD query='tablet', query='smartwatch', query='laptop': set the category filter instead), never a brand name (BAD query='Sony': set the brand filter instead), never a price. Omit entirely when browsing a category or brand: 'show me tablets' = category='Tablets', no query. Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB'), which are ignored when finding products and only rank them. Put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. Leave out use-case words like gaming, cheap or best.
+- `min_price` (number, optional) - Minimum price in GBP.
+- `max_price` (number, optional) - Maximum price in GBP.
+- `brand` (string, optional) - Filter by brand name (exact match, case-insensitive). Examples: Apple, Samsung, Sony, HP, Dell, Lenovo, Anker, Bose, LG
+- `category` (string, optional) - Filter by product category. Use ONLY these exact values: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers. 'Smartphones' is not valid (use 'Phones'), nor is 'Televisions' (use 'TVs'). Gaming headsets are category='Headphones', query='gaming headset': the Gaming category is consoles, controllers and accessories only.
+- `constraints` (object, optional) - Hard spec requirements, checked per product against its `attributes`. Shape `{name: {op: number}}` with op `eq`, `gte` or `lte`; a range is `{gte, lte}`. On every operator, storage matches within 3% and screen size within 0.5 inch; a whole-number screen size N also covers up to N+1 on `eq` and `lte` (`gte` is unchanged); other specs exactly: `gte 1024` accepts a 1TB drive, `eq 22` a 21.5" screen, `eq 13` a 13.6" one, `lte 15` a 15.6" one. Example: `{"memory_gb": {"gte": 24}, "storage_gb": {"gte": 1000}, "screen_in": {"eq": 15}}`. Names and units: `memory_gb` (RAM, GB), `storage_gb` (GB, 1TB = 1000), `screen_in` (inches), `resolution_p` (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), `refresh_hz` (Hz), `power_w` (W), `wifi_gen` (Wi-Fi generation: 6, 6E = 6.5, 7). A spec written in `query` counts only when it says what it is ('24GB RAM', '1TB', '144Hz', '55"') and means at least, except screen size (that size); a bare '24GB' stays a search word. Explicit constraints win over it. Always set `category` (and brand if known) with constraints: a search of only specs is rejected, as is a bad request (unknown name or operator, negative value, a combination nothing can meet such as `gte` above `lte`); the error lists the valid ones. See [Structured specs](#structured-specs).
+- `lite` (boolean, optional) - Return trimmed product objects with only essential fields (id, title, brand, price, currency, availability, image_url, purchase_url, offer_count and, with constraints, constraint_status and the status and value of the constrained names). Always set to true unless full product objects are needed.
+- `limit` (number, optional) - Maximum number of products to return (default 50, max 100)
+- `sort` (string, optional) - Sort order: 'relevance' (default), 'price_asc' (in stock first, then cheapest), 'price_desc' (in stock first, then most expensive). With constraints, matched products still come first.
 
-**Returns:** Up to 50 products with summary data. With `lite: true`, returns only essential fields (id, title, brand, price, currency, availability, image_url, purchase_url, offer_count and, with constraints, `constraint_status` and the `attributes` of the constrained names).
+**Returns:** `products` and a `total`. With constraints, each product has `constraint_status` per name (`matched`: a retailer's title states a value that meets it; `unverified`: not known to meet it, so never treat it as a match), `total` counts the products that match every constraint, `unverified_total` the unverified ones that passed the other filters, and `excluded_by_constraints` the products whose stated value fails. `candidates_truncated: true` means the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again. `availability` is `in_stock`, `low_stock`, `out_of_stock` or `unknown` (the retailer gave no stock signal). If `offer_count` is above 1, call `get_product` for the 1-3 products you will recommend to compare retailers; only claim a saving between in-stock offers of the same configuration.
 
 ### `get_product`
 
-Get full details for a single product. Returns structured `attributes` (see [Structured specs](#structured-specs)), `specs.description` (the retailer's own prose, for processor, ports, graphics and anything `attributes` does not cover), availability, delivery time, and all retailer offers with per-retailer pricing. Use after `search_products` for detailed comparison or recommendations.
+Get full details for a single product by ID. Returns structured `attributes` (see [Structured specs](#structured-specs)), `specs.description` (the retailer's own prose, for processor, GPU, ports, weight, battery and features that `attributes` does not cover), pricing, availability, delivery time, and all retailer offers with per-retailer pricing (`offers[].stock` is a unit count only when the retailer supplies one, otherwise null). Accepts both canonical product IDs and original retailer offer IDs. Use after `search_products` for detailed comparison, price comparison across retailers, or recommendations.
 
 **Parameters:**
-- `product_id` (string) - The product ID from search results
+- `product_id` (string) - The unique product ID from search results
 
-**Returns:** Complete product with structured `attributes`, `specs` (including the retailer's `specs.description`), pricing across all retailers, and provenance information
+**Returns:** Complete product with structured `attributes`, `specs` (including the retailer's `specs.description`), `offers` sorted in stock first then cheapest, and provenance information
 
 ### Structured specs
 
@@ -141,8 +141,8 @@ Search across **26,000+ electronics products** from major UK retailers including
 
 **Budget shopping:**
 ```
-"Find gaming laptops under £800"
-→ category='Laptops', query='gaming', max_price=800, sort='price_asc', lite=true
+"Find laptops with at least 16GB RAM under £800"
+→ category='Laptops', constraints={"memory_gb": {"gte": 16}}, max_price=800, sort='price_asc', lite=true
 ```
 
 **Brand search:**
