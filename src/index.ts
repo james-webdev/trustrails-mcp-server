@@ -190,7 +190,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "search_products",
         description:
-          "Search 26,000+ deduplicated UK electronics products across multiple retailers with price comparison. " +
+          "Search deduplicated UK electronics products across multiple retailers with price comparison. " +
           "Returns summary data: title, brand, price, availability, category, purchase link, and offer_count. " +
           "When offer_count > 1, the product is available from multiple retailers — call get_product for the 1-3 products you will recommend, not for every result, to see all offers. " +
           "Searches that pass constraints add constraint_status and the constrained attributes; for every attribute, the retailer's description and all offers, call get_product with the product ID. " +

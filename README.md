@@ -75,7 +75,7 @@ Claude will search across multiple UK retailers and show you:
 
 ### `search_products`
 
-Search 26,000+ UK electronics products. Returns summary data (title, price, availability, category). For a product's structured `attributes`, the retailer's description and every offer, use `get_product`.
+Search UK electronics products. Returns summary data (title, price, availability, category). For a product's structured `attributes`, the retailer's description and every offer, use `get_product`.
 
 **Parameters:**
 - `query` (string) - Refinement terms after brand and category are extracted: model lines, series, variants, technology descriptors, or model numbers (e.g., "neo", "ultra", "oled", "WH-1000XM5"). Omit entirely if brand + category alone describe what's needed. Never put brand names, product family names, or prices here — use filters. Query words must appear in the title, except words naming the category ("router" in Networking) and bare numbers or specs ("4070", "16GB"), which are ignored when finding products and only rank them: put a model number with its prefix ("RTX 4070", not "4070") and check each title for it.
@@ -133,7 +133,7 @@ Searches with constraints return the constraints applied, `excluded_by_constrain
 
 ## Supported Retailers
 
-Search across **26,000+ electronics products** from major UK retailers including AO, with new retailers added regularly.
+Search across **UK electronics products** from major UK retailers including AO, with new retailers added regularly.
 
 ---
 
