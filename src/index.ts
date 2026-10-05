@@ -13,9 +13,9 @@ const API_KEY = process.env.TRUSTRAILS_API_KEY || "mcp-public-2026";
 const BASE_URL = process.env.TRUSTRAILS_BASE_URL || "https://trustrails.app";
 
 // package.json sits one level above both src/ and dist/
-const { version: PACKAGE_VERSION } = JSON.parse(
+const pkg: { version: string } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf-8")
-) as { version: string };
+);
 
 /**
  * TrustRails MCP Server
@@ -114,7 +114,7 @@ interface SearchResponse {
 const server = new Server(
   {
     name: "trustrails",
-    version: PACKAGE_VERSION,
+    version: pkg.version,
   },
   {
     capabilities: {
