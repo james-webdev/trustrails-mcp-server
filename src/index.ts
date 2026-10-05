@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -10,6 +11,11 @@ import {
 // TrustRails API configuration
 const API_KEY = process.env.TRUSTRAILS_API_KEY || "mcp-public-2026";
 const BASE_URL = process.env.TRUSTRAILS_BASE_URL || "https://trustrails.app";
+
+// package.json sits one level above both src/ and dist/
+const { version: PACKAGE_VERSION } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8")
+) as { version: string };
 
 /**
  * TrustRails MCP Server
@@ -51,13 +57,30 @@ type Attribute =
 
 type Attributes = Partial<Record<ConstraintName, Attribute>>;
 
+type Availability = "in_stock" | "low_stock" | "out_of_stock" | "unknown";
+
+interface Offer {
+  id: string;
+  source: string;
+  title: string;
+  price: number;
+  currency: string;
+  availability: Availability;
+  stock: number | null;
+  delivery_time: string;
+  purchase_url: string;
+  image_url?: string;
+  last_updated: string;
+}
+
 interface Product {
   id: string;
+  ean?: string;
   title: string;
   brand?: string;
   price: number;
   currency: string;
-  availability: string;
+  availability: Availability;
   delivery_time: string;
   image_url?: string;
   category: string;
@@ -74,6 +97,8 @@ interface Product {
   purchase_url: string;
   attributes?: Attributes;
   constraint_status?: Partial<Record<ConstraintName, ConstraintStatus>>;
+  offer_count?: number;
+  offers?: Offer[];
 }
 
 interface SearchResponse {
@@ -89,7 +114,7 @@ interface SearchResponse {
 const server = new Server(
   {
     name: "trustrails",
-    version: "0.1.0",
+    version: PACKAGE_VERSION,
   },
   {
     capabilities: {
