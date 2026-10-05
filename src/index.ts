@@ -191,9 +191,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         description:
           "Search 26,000+ deduplicated UK electronics products across multiple retailers with price comparison. " +
           "Returns summary data: title, brand, price, availability, category, purchase link, and offer_count. " +
-          "When offer_count > 1, the product is available from multiple retailers — call get_product for the 1-3 products you will recommend, not for every result, to see all offers. " +
+          "When offer_count > 1, the product is available from multiple retailers — call get_product for the 1-3 products you will recommend, not for every result, to see all offers (offers[] is sorted in stock first, then cheapest). " +
           "Searches that pass constraints add constraint_status and the constrained attributes; for every attribute, the retailer's description and all offers, call get_product with the product ID. " +
-          "Only compare prices and claim savings between offers of the same configuration: if any attribute is `conflicting`, check offers[].title first and never claim a saving between different sizes or configurations. " +
+          "Only compare prices and claim savings between in-stock offers of the same configuration: if any attribute is `conflicting`, check offers[].title first and never claim a saving between different sizes or configurations. " +
           "All prices in GBP. " +
           "IMPORTANT RULES: " +
           "1) Decompose the user's request: extract brand → brand filter, category → category filter, price → price filters, RAM/storage/screen size/resolution/refresh rate/wattage/Wi-Fi generation → constraints. What remains is the query. " +
@@ -219,7 +219,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "With constraints, `total` counts the products that match every constraint and `unverified_total` the unverified products that passed the other filters (only some may be in `products`). If `total` is 0, say no product is known to meet every requirement and offer the unverified ones only as unconfirmed. " +
           "With lite=true, `attributes` holds only the constrained names, as {status, value} or {status, values} when conflicting: state the value from there, and call get_product for the rest. " +
           "If `candidates_truncated` is true, the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again before saying nothing matches. If the search was already narrowed, tell the user the results may be incomplete. " +
-          "STOCK AVAILABILITY: When a product is availability: out_of_stock, do not recommend it as a purchase. Instead mention it as a notable alternative — especially if it offers a meaningful price advantage — and suggest the user check back. Example: 'This model is £X cheaper at [retailer] but currently out of stock — worth checking back if you're not in a rush.' Never silently omit out-of-stock results; surface them transparently.",
+          "STOCK AVAILABILITY: availability is in_stock, low_stock, out_of_stock or unknown (the retailer gave no stock signal: say so, don't assume). When a product is availability: out_of_stock, do not recommend it as a purchase. Instead mention it as a notable alternative — especially if it offers a meaningful price advantage — and suggest the user check back. Example: 'This model is £X cheaper at [retailer] but currently out of stock — worth checking back if you're not in a rush.' Never silently omit out-of-stock results; surface them transparently.",
         inputSchema: {
           type: "object",
           properties: {
@@ -284,7 +284,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             sort: {
               type: "string",
-              description: "Sort order: 'relevance' (default), 'price_asc' (cheapest first), 'price_desc' (most expensive first). Use 'price_asc' when comparing prices.",
+              description: "Sort order: 'relevance' (default), 'price_asc' (in stock first, then cheapest), 'price_desc' (in stock first, then most expensive). Use 'price_asc' when comparing prices.",
             },
           },
         },
@@ -298,7 +298,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           "'conflicting' = retailers state different values (none is picked, tell the user they disagree; a retailer can appear under two values, so read offers[].title to see which listing states which); a missing name = unknown. " +
           "Also returns specs.description, the retailer's own prose: use it only for details attributes do not cover (processor, GPU, ports, weight, battery, features). " +
           "It can describe another configuration or a maximum ('up to 32GB'), so it never overrides or fills in an attribute: if an attribute is missing or conflicting, that spec is unknown or unconfirmed, and you may mention what the description says only as 'the retailer's description mentions X, unconfirmed'. " +
-          "It also returns pricing, availability, delivery time, and all retailer offers with per-retailer pricing. " +
+          "It also returns pricing, availability, delivery time, and all retailer offers with per-retailer pricing (offers[].stock is a unit count only when the retailer supplies one, otherwise null). " +
           "Accepts both canonical product IDs and original retailer offer IDs. " +
           "Use this after search_products to get detailed specs for comparison or recommendations. " +
           "Always call this when a user needs precise product attributes, compatibility info, side-by-side comparisons, or price comparison across retailers.",
