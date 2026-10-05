@@ -1,11 +1,11 @@
 {
   "name": "@trustrails/mcp-server",
-  "version": "1.0.22",
+  "version": "1.0.25",
   "mcpName": "app.trustrails/server",
   "description": "MCP server for searching UK electronics products across multiple retailers",
   "type": "module",
   "bin": {
-    "trustrails-mcp": "./dist/index.js"
+    "trustrails-mcp": "dist/index.js"
   },
   "files": [
     "dist"
@@ -30,7 +30,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/james-webdev/trustrails-mcp-server.git"
+    "url": "git+https://github.com/james-webdev/trustrails-mcp-server.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1"
