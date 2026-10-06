@@ -88,11 +88,11 @@ interface Product {
   price: number;
   currency: string;
   availability: Availability;
-  delivery_time: string;
+  delivery_time?: string;
   image_url?: string;
   category: string;
   product_type: 'product' | 'accessory';
-  specs: {
+  specs?: {
     description?: string;
     model_number?: string;
     dimensions?: string;
