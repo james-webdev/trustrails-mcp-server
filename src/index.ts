@@ -53,10 +53,16 @@ interface AttributeSource {
 }
 
 type Attribute =
-  | { status: "confirmed" | "inferred"; value: number; sources?: AttributeSource[] }
-  | { status: "conflicting"; values: Array<{ value: number; sources?: AttributeSource[] }> };
+  | { status: "confirmed" | "inferred"; value: number; sources: AttributeSource[] }
+  | { status: "conflicting"; values: Array<{ value: number; sources: AttributeSource[] }> };
+
+type LiteAttribute =
+  | { status: "confirmed" | "inferred"; value: number }
+  | { status: "conflicting"; values: Array<{ value: number }> };
 
 type Attributes = Partial<Record<ConstraintName, Attribute>>;
+
+type LiteAttributes = Partial<Record<ConstraintName, LiteAttribute>>;
 
 type Availability = "in_stock" | "low_stock" | "out_of_stock" | "unknown";
 
@@ -102,8 +108,22 @@ interface Product {
   offers?: Offer[];
 }
 
+interface LiteProduct {
+  id: string;
+  title: string;
+  brand?: string;
+  price: number;
+  currency: string;
+  availability: Availability;
+  image_url?: string;
+  purchase_url: string;
+  offer_count: number;
+  constraint_status?: Product["constraint_status"];
+  attributes?: LiteAttributes;
+}
+
 interface SearchResponse {
-  products: Product[];
+  products: Product[] | LiteProduct[];
   total: number;
   constraints?: SpecConstraints;
   excluded_by_constraints?: number;
