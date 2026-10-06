@@ -66,7 +66,7 @@ Just ask Claude naturally — it will decompose your request into the right quer
 
 Claude will search across multiple UK retailers and show you:
 - Real-time prices & availability
-- Direct purchase links
+- Purchase links (trustrails.app/go/ redirects to the retailer, through an affiliate link)
 - Then call `get_product` for a product's attributes, description and every offer when you need details
 
 ---
@@ -88,7 +88,7 @@ Search 26,000+ UK electronics products across 7 retailers with price comparison.
 - `limit` (number, optional) - Maximum number of products to return (default 50, max 100)
 - `sort` (string, optional) - Sort order: 'relevance' (default), 'price_asc' (in stock first, then cheapest), 'price_desc' (in stock first, then most expensive). With constraints, matched products still come first.
 
-**Returns:** `products` and a `total`. With constraints, each product has `constraint_status` per name (`matched`: a retailer's title states a value that meets it; `unverified`: not known to meet it, so never treat it as a match), `total` counts the products that match every constraint, `unverified_total` the unverified ones that passed the other filters, and `excluded_by_constraints` the products whose stated value fails. `candidates_truncated: true` means the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again. `availability` is `in_stock`, `low_stock`, `out_of_stock` or `unknown` (the retailer gave no stock signal). If `offer_count` is above 1, call `get_product` for the 1-3 products you will recommend to compare retailers; only claim a saving between in-stock offers of the same configuration.
+**Returns:** `products` and a `total`. With constraints, each product has `constraint_status` per name (`matched`: a retailer's title states a value that meets it; `unverified`: not known to meet it, so never treat it as a match), `total` counts the products that match every constraint, `unverified_total` the unverified ones that passed the other filters, and `excluded_by_constraints` the products whose stated value fails. `candidates_truncated: true` means the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again. `availability` is `in_stock`, `low_stock`, `out_of_stock` or `unknown` (the retailer gave no stock signal), and with `purchase_url` and `price` it comes from the product's best offer: in stock first, then cheapest. If `offer_count` is above 1, call `get_product` for the 1-3 products you will recommend to compare retailers; only claim a saving between in-stock offers of the same configuration.
 
 ### `get_product`
 
@@ -197,7 +197,7 @@ Search across **26,000+ electronics products** from major UK retailers including
 - ✅ **Real-time data** - Product feeds updated twice daily
 - ✅ **Multiple retailers** - Compare prices in one search
 - ✅ **Stock information** - See what's actually available to buy
-- ✅ **Direct purchase links** - Click through to buy immediately
+- ✅ **Purchase links** - Click through to the retailer to buy (affiliate links)
 - ✅ **Zero setup** - Works out of the box with shared public key
 - ✅ **UK-focused** - Optimized for UK electronics shopping
 
