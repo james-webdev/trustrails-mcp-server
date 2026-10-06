@@ -68,7 +68,7 @@ Claude will search across multiple UK retailers and show you:
 - Real-time prices & availability
 - Purchase links (trustrails.app/go/ redirects to the retailer, through an affiliate link)
 - Every known structured spec (`attributes`), so products can be compared from the search alone
-- Then `get_product` for your final 1-3 picks: the retailer's description, every offer and buy link
+- Then `get_product` for your final 1-3 picks, only when you need what search lacks: the retailer's description, or every retailer's offer and buy link
 
 ---
 
@@ -89,11 +89,11 @@ Search 26,000+ UK electronics products across 7 retailers with price comparison.
 - `limit` (number, optional) - Maximum number of products to return (default 50, max 100)
 - `sort` (string, optional) - Sort order: 'relevance' (default), 'price_asc' (in stock first, then cheapest), 'price_desc' (in stock first, then most expensive). With constraints, matched products still come first.
 
-**Returns:** `products` and a `total`. Each product carries every known `attributes` spec (a product with none has no `attributes` key): compare specs from these, a missing name is unknown and `conflicting` means retailers disagree. With constraints, each product has `constraint_status` per name (`matched`: a retailer's title states a value that meets it; `unverified`: not known to meet it, so never treat it as a match), `total` counts the products that match every constraint, `unverified_total` the unverified ones that passed the other filters, and `excluded_by_constraints` the products whose stated value fails. `candidates_truncated: true` means the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again. `availability` is `in_stock`, `low_stock`, `out_of_stock` or `unknown` (the retailer gave no stock signal), and with `purchase_url` and `price` it comes from the product's best offer: in stock first, then cheapest. If `offer_count` is above 1, call `get_product` for the 1-3 products you will recommend to compare retailers; only claim a saving between in-stock offers of the same configuration.
+**Returns:** `products` and a `total`. Each product carries every known `attributes` spec (a product with no `attributes` key has none of these specs known): compare specs from these. State the value of a `confirmed` or `inferred` spec; only `conflicting` (retailers disagree) or a missing name (unknown) needs a caveat. With constraints, each product has `constraint_status` per name (`matched`: a retailer's title states a value that meets it; `unverified`: not known to meet it, so never treat it as a match), `total` counts the products that match every constraint, `unverified_total` the unverified ones that passed the other filters, and `excluded_by_constraints` the products whose stated value fails. `candidates_truncated: true` means the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again. `availability` is `in_stock`, `low_stock`, `out_of_stock` or `unknown` (the retailer gave no stock signal), and with `purchase_url` and `price` it comes from the product's best offer: in stock first, then cheapest. If `offer_count` is above 1, call `get_product` for your final 1-3 picks to compare retailers. Before claiming a saving or recommending a pick, read `offers[].title`: they must name the same model and be the product type asked for (not an accessory or adapter); if they differ, don't claim a saving.
 
 ### `get_product`
 
-Get full details for a single product by ID. Returns structured `attributes` (see [Structured specs](#structured-specs)), `specs.description` (the retailer's own prose, for processor, GPU, ports, weight, battery and features that `attributes` does not cover), pricing, availability, delivery time, and all retailer offers with per-retailer pricing (`offers[].stock` is a unit count only when the retailer supplies one, otherwise null). Accepts both canonical product IDs and original retailer offer IDs. Use after `search_products` for your final 1-3 picks, not for every result: search results already carry `attributes` to compare specs. Call it for details only the description has, price comparison across retailers, and buy links.
+Get full details for a single product by ID. Returns structured `attributes` (see [Structured specs](#structured-specs)), `specs.description` (the retailer's own prose, for processor, GPU, ports, weight, battery and features that `attributes` does not cover), pricing, availability, delivery time, and all retailer offers with per-retailer pricing (`offers[].stock` is a unit count only when the retailer supplies one, otherwise null). Accepts both canonical product IDs and original retailer offer IDs. Use after `search_products` only for your final 1-3 picks, and only when you need what search lacks: details only the description has (if it doesn't give a detail, tell the user it isn't listed), or every retailer's offer and buy link. Search results already carry `attributes` to compare specs. A pick with `offer_count` 1 needs no call unless the user asked for a description-only detail.
 
 **Parameters:**
 - `product_id` (string) - The unique product ID from search results
@@ -102,15 +102,15 @@ Get full details for a single product by ID. Returns structured `attributes` (se
 
 ### Structured specs
 
-Search results and `get_product` return `attributes`: structured specs (RAM, storage, screen size, resolution, refresh rate, power, Wi-Fi generation) read from retailer titles when the catalogue is imported. Each has a `status`, and a spec nobody states is absent (unknown); a product with no known specs has no `attributes` key. What each call returns:
+Search results and `get_product` return `attributes`: structured specs (RAM, storage, screen size, resolution, refresh rate, power, Wi-Fi generation) read from retailer titles when the catalogue is imported. Each has a `status`, and a spec nobody states is absent (unknown); a product with no `attributes` key has none of these specs known (they are unknown). What each call returns:
 
 | Call | Returns |
 |------|---------|
-| `search_products` with `lite=true` (the default for agents) | `id`, `title`, `brand`, `price`, `currency`, `availability`, `image_url`, `purchase_url`, `offer_count`, every known attribute as `{status, value}` (or `{status, values}` when conflicting) without sources, and `constraint_status` when constrained |
+| `search_products` with `lite=true` (what agents should always set) | `id`, `title`, `brand`, `price`, `currency`, `availability`, `image_url`, `purchase_url`, `offer_count`, every known attribute as `{status, value}` (or `{status, values}` when conflicting) without sources, and `constraint_status` when constrained |
 | `search_products` without `lite` | the lite fields plus `ean`, `category`, `product_type`, `provenance` and every attribute with its `sources` |
 | `get_product` | everything, including `specs.description` and dimensions, `offers` and `delivery_time` |
 
-The statuses:
+Names and units are as in `constraints`. State the value for `confirmed` and `inferred`; only `conflicting` or a missing name needs a caveat. The statuses:
 
 - `confirmed`: two or more retailers state the same value.
 - `inferred`: one retailer's title states it.

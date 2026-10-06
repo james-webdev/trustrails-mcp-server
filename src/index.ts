@@ -245,10 +245,10 @@ const TOOLS: Tool[] = [
       "CROSS-CATEGORY NOTE: Gaming headsets → category='Headphones', query='gaming headset'. The Gaming category is consoles/controllers/accessories only. " +
       "Always set lite=true (it still carries `attributes`). If 0 results, broaden the query or drop filters (but never present a near miss as meeting a requirement). " +
       "Searches 26,000+ UK electronics products across 7 retailers with price comparison. Prices are in GBP. Every listing is new (refurbished and used are excluded). " +
-      "PRICE COMPARISON: if offer_count > 1, call get_product for the 1-3 products you will recommend, not for every result, and show the cheapest in-stock retailer, the other prices with the difference and the exact saving among in-stock offers (offers[] is sorted in-stock first, then cheapest). " +
-      "Only claim a saving between offers of the same configuration: if an attribute is `conflicting`, check offers[].title first. " +
-      "COMPARING SPECS: compare products from the `attributes` in the search results, not by calling get_product on each: every spec known for a product is there as {status, value}, or {status, values} when conflicting, without sources. A missing name means unknown and `conflicting` means retailers disagree, so say so instead of guessing; a product with no `attributes` has no known specs. " +
-      "Call get_product only for your final 1-3 picks, for what only the retailer's description has (processor, GPU, ports, weight, battery), the offers and price comparison, and each retailer's buy link. Don't guess those details from titles. " +
+      "PRICE COMPARISON: if offer_count > 1, call get_product for your final 1-3 picks (see COMPARING SPECS), not for every result, and show the cheapest in-stock retailer, the other prices with the difference and the exact saving among in-stock offers (offers[] is sorted in-stock first, then cheapest). " +
+      "Before claiming a saving or recommending a pick, read offers[].title: they must name the same model and be the product type asked for (not an accessory or adapter); if they differ, don't claim a saving. " +
+      "COMPARING SPECS: compare products from the `attributes` in the search results, not by calling get_product on each. Every spec known for a product is there as {status, value}, or {status, values} when conflicting, without sources; names and units are as in `constraints`. 'confirmed' (two or more retailers state the same value) and 'inferred' (one retailer's title states it) are both the product's spec: state the value. Only `conflicting` (retailers disagree: say so, don't pick one) or a missing name (unknown) needs a caveat. A product with no `attributes` has none of these specs known: say they are unknown. " +
+      "Call get_product only for your final 1-3 picks, and only when you need what search lacks: what only the retailer's description has (processor, GPU, ports, weight, battery; if it doesn't give the detail, tell the user it isn't listed), or every retailer's offer and buy link (search results carry only the best offer's purchase_url). A pick with offer_count 1 needs no call unless the user asked for a description-only detail. Don't guess those details from titles. " +
       "SPEC REQUIREMENTS: put exact requirements in `constraints`, not in query, and always set `category` (and brand if known) with them: a search of only specs is rejected. " +
       "If a requirement is ambiguous (e.g. '16GB' could be RAM or storage), ask the user or search without that constraint. " +
       "With constraints, every product has `constraint_status` per name: " +
@@ -334,12 +334,11 @@ const TOOLS: Tool[] = [
       "Returns `attributes`: structured specs read from retailer titles, each name mapping to {status, value, sources}; a conflicting one has values: [{value, sources}] instead of value and sources. " +
       "Names and units as in the search constraints argument. status: 'confirmed' = two or more retailers state the same value; 'inferred' = one retailer's title states it; " +
       "'conflicting' = retailers state different values (none is picked, tell the user they disagree; a retailer can appear under two values, so read offers[].title to see which listing states which); a missing name = unknown. " +
-      "Also returns specs.description, the retailer's own prose: use it only for details attributes do not cover (processor, GPU, ports, weight, battery, features). " +
+      "Also returns specs.description, the retailer's own prose: use it only for details attributes do not cover (processor, GPU, ports, weight, battery, features); if it doesn't give a detail, tell the user it isn't listed. " +
       "It can describe another configuration or a maximum ('up to 32GB'), so it never overrides or fills in an attribute: if an attribute is missing or conflicting, that spec is unknown or unconfirmed, and you may mention what the description says only as 'the retailer's description mentions X, unconfirmed'. " +
       "It also returns pricing, availability, delivery time, and all retailer offers with per-retailer pricing (offers[].stock is a unit count only when the retailer supplies one, otherwise null). " +
       "Accepts both canonical product IDs and original retailer offer IDs. " +
-      "Use this after search_products for your final 1-3 picks, not for every result: search results already carry `attributes` to compare specs. " +
-      "Call this when a user needs details only the description has, compatibility info, or price comparison across retailers.",
+      "Use this after search_products only for your final 1-3 picks, and only when you need what search lacks: details only the description has, or every retailer's offer and buy link. Search results already carry `attributes` to compare specs.",
     inputSchema: {
       type: "object",
       properties: {
