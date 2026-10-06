@@ -244,7 +244,7 @@ const TOOLS: Tool[] = [
       "Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB'), which are ignored when finding products and only rank them. Put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. Leave out use-case words like gaming, cheap or best. " +
       "CROSS-CATEGORY NOTE: Gaming headsets → category='Headphones', query='gaming headset'. The Gaming category is consoles/controllers/accessories only. " +
       "Always set lite=true. If 0 results, broaden the query or drop filters (but never present a near miss as meeting a requirement). " +
-      "Searches 26,000+ UK electronics products across 7 retailers with price comparison. Prices are in GBP. " +
+      "Searches 26,000+ UK electronics products across 7 retailers with price comparison. Prices are in GBP. Every listing is new (refurbished and used are excluded). " +
       "PRICE COMPARISON: if offer_count > 1, call get_product for the 1-3 products you will recommend, not for every result, and show the cheapest in-stock retailer, the other prices with the difference and the exact saving among in-stock offers (offers[] is sorted in-stock first, then cheapest). " +
       "Only claim a saving between offers of the same configuration: if an attribute is `conflicting`, check offers[].title first. " +
       "For specs not in `attributes` (ports, weight, battery), call get_product on the top 3-5 results; don't guess them from titles. " +
@@ -257,7 +257,9 @@ const TOOLS: Tool[] = [
       "With constraints, `total` counts the products that match every constraint and `unverified_total` the unverified products that passed the other filters (only some may be in `products`). If `total` is 0, say no product is known to meet every requirement and offer the unverified ones only as unconfirmed. " +
       "With lite=true, `attributes` holds only the constrained names, as {status, value} or {status, values} when conflicting: state the value from there, and call get_product for the rest. " +
       "If `candidates_truncated` is true, the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again before saying nothing matches. If the search was already narrowed, tell the user the results may be incomplete. " +
-      "STOCK: availability is in_stock, low_stock, out_of_stock or unknown (the retailer gave no stock signal: say so, don't assume). When availability is out_of_stock, mention it as an alternative and suggest checking back — do not silently omit it.",
+      "STOCK: availability is in_stock, low_stock, out_of_stock or unknown (the retailer gave no stock signal: say so, don't assume). When availability is out_of_stock, mention it as an alternative and suggest checking back — do not silently omit it. " +
+      "purchase_url is a trustrails.app/go/ redirect through an affiliate link; TrustRails may earn a commission, and the price is the same. " +
+      "Colour variants have separate barcodes and are separate products: when price matters, search again without the colour or check other colours of the same model.",
     inputSchema: {
       type: "object",
       properties: {
