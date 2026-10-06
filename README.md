@@ -67,7 +67,8 @@ Just ask Claude naturally — it will decompose your request into the right quer
 Claude will search across multiple UK retailers and show you:
 - Real-time prices & availability
 - Purchase links (trustrails.app/go/ redirects to the retailer, through an affiliate link)
-- Then call `get_product` for a product's attributes, description and every offer when you need details
+- Every known structured spec (`attributes`), so products can be compared from the search alone
+- Then `get_product` for your final 1-3 picks: the retailer's description, every offer and buy link
 
 ---
 
@@ -84,15 +85,15 @@ Search 26,000+ UK electronics products across 7 retailers with price comparison.
 - `brand` (string, optional) - Filter by brand name (exact match, case-insensitive). Examples: Apple, Samsung, Sony, HP, Dell, Lenovo, Anker, Bose, LG
 - `category` (string, optional) - Filter by product category. Use ONLY these exact values: Laptops, Desktops, Tablets, Phones, TVs, Monitors, Headphones, Speakers, Cameras, Keyboards, Mice, Printers, Networking, Storage, Gaming, Wearables, Drones, Audio, Cables & Chargers. 'Smartphones' is not valid (use 'Phones'), nor is 'Televisions' (use 'TVs'). Gaming headsets are category='Headphones', query='gaming headset': the Gaming category is consoles, controllers and accessories only.
 - `constraints` (object, optional) - Hard spec requirements, checked per product against its `attributes`. Shape `{name: {op: number}}` with op `eq`, `gte` or `lte`; a range is `{gte, lte}`. On every operator, storage matches within 3% and screen size within 0.5 inch; a whole-number screen size N also covers up to N+1 on `eq` and `lte` (`gte` is unchanged); other specs exactly: `gte 1024` accepts a 1TB drive, `eq 22` a 21.5" screen, `eq 13` a 13.6" one, `lte 15` a 15.6" one. Example: `{"memory_gb": {"gte": 24}, "storage_gb": {"gte": 1000}, "screen_in": {"eq": 15}}`. Names and units: `memory_gb` (RAM, GB), `storage_gb` (GB, 1TB = 1000), `screen_in` (inches), `resolution_p` (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), `refresh_hz` (Hz), `power_w` (W), `wifi_gen` (Wi-Fi generation: 6, 6E = 6.5, 7). A spec written in `query` counts only when it says what it is ('24GB RAM', '1TB', '144Hz', '55"') and means at least, except screen size (that size); a bare '24GB' stays a search word. Explicit constraints win over it. Always set `category` (and brand if known) with constraints: a search of only specs is rejected, as is a bad request (unknown name or operator, negative value, a combination nothing can meet such as `gte` above `lte`); the error lists the valid ones. See [Structured specs](#structured-specs).
-- `lite` (boolean, optional) - Return trimmed product objects with only essential fields (id, title, brand, price, currency, availability, image_url, purchase_url, offer_count and, with constraints, constraint_status and the status and value of the constrained names). Always set to true unless full product objects are needed.
+- `lite` (boolean, optional) - Return trimmed product objects with only essential fields (id, title, brand, price, currency, availability, image_url, purchase_url, offer_count, attributes (every known spec as {status, value}, without sources) and, with constraints, constraint_status). Always set to true unless you need ean, category, provenance or the sources of each attribute.
 - `limit` (number, optional) - Maximum number of products to return (default 50, max 100)
 - `sort` (string, optional) - Sort order: 'relevance' (default), 'price_asc' (in stock first, then cheapest), 'price_desc' (in stock first, then most expensive). With constraints, matched products still come first.
 
-**Returns:** `products` and a `total`. With constraints, each product has `constraint_status` per name (`matched`: a retailer's title states a value that meets it; `unverified`: not known to meet it, so never treat it as a match), `total` counts the products that match every constraint, `unverified_total` the unverified ones that passed the other filters, and `excluded_by_constraints` the products whose stated value fails. `candidates_truncated: true` means the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again. `availability` is `in_stock`, `low_stock`, `out_of_stock` or `unknown` (the retailer gave no stock signal), and with `purchase_url` and `price` it comes from the product's best offer: in stock first, then cheapest. If `offer_count` is above 1, call `get_product` for the 1-3 products you will recommend to compare retailers; only claim a saving between in-stock offers of the same configuration.
+**Returns:** `products` and a `total`. Each product carries every known `attributes` spec (a product with none has no `attributes` key): compare specs from these, a missing name is unknown and `conflicting` means retailers disagree. With constraints, each product has `constraint_status` per name (`matched`: a retailer's title states a value that meets it; `unverified`: not known to meet it, so never treat it as a match), `total` counts the products that match every constraint, `unverified_total` the unverified ones that passed the other filters, and `excluded_by_constraints` the products whose stated value fails. `candidates_truncated: true` means the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again. `availability` is `in_stock`, `low_stock`, `out_of_stock` or `unknown` (the retailer gave no stock signal), and with `purchase_url` and `price` it comes from the product's best offer: in stock first, then cheapest. If `offer_count` is above 1, call `get_product` for the 1-3 products you will recommend to compare retailers; only claim a saving between in-stock offers of the same configuration.
 
 ### `get_product`
 
-Get full details for a single product by ID. Returns structured `attributes` (see [Structured specs](#structured-specs)), `specs.description` (the retailer's own prose, for processor, GPU, ports, weight, battery and features that `attributes` does not cover), pricing, availability, delivery time, and all retailer offers with per-retailer pricing (`offers[].stock` is a unit count only when the retailer supplies one, otherwise null). Accepts both canonical product IDs and original retailer offer IDs. Use after `search_products` for detailed comparison, price comparison across retailers, or recommendations.
+Get full details for a single product by ID. Returns structured `attributes` (see [Structured specs](#structured-specs)), `specs.description` (the retailer's own prose, for processor, GPU, ports, weight, battery and features that `attributes` does not cover), pricing, availability, delivery time, and all retailer offers with per-retailer pricing (`offers[].stock` is a unit count only when the retailer supplies one, otherwise null). Accepts both canonical product IDs and original retailer offer IDs. Use after `search_products` for your final 1-3 picks, not for every result: search results already carry `attributes` to compare specs. Call it for details only the description has, price comparison across retailers, and buy links.
 
 **Parameters:**
 - `product_id` (string) - The unique product ID from search results
@@ -101,7 +102,15 @@ Get full details for a single product by ID. Returns structured `attributes` (se
 
 ### Structured specs
 
-`get_product` returns `attributes`: structured specs (RAM, storage, screen size, resolution, refresh rate, power, Wi-Fi generation) read from retailer titles when the catalogue is imported, next to `specs`. Each has a `status`, and a spec nobody states is absent (unknown):
+Search results and `get_product` return `attributes`: structured specs (RAM, storage, screen size, resolution, refresh rate, power, Wi-Fi generation) read from retailer titles when the catalogue is imported. Each has a `status`, and a spec nobody states is absent (unknown); a product with no known specs has no `attributes` key. What each call returns:
+
+| Call | Returns |
+|------|---------|
+| `search_products` with `lite=true` (the default for agents) | `id`, `title`, `brand`, `price`, `currency`, `availability`, `image_url`, `purchase_url`, `offer_count`, every known attribute as `{status, value}` (or `{status, values}` when conflicting) without sources, and `constraint_status` when constrained |
+| `search_products` without `lite` | the lite fields plus `ean`, `category`, `product_type`, `provenance` and every attribute with its `sources` |
+| `get_product` | everything, including `specs.description` and dimensions, `offers` and `delivery_time` |
+
+The statuses:
 
 - `confirmed`: two or more retailers state the same value.
 - `inferred`: one retailer's title states it.
@@ -121,7 +130,7 @@ For one Galaxy S26 Ultra, where only JoyBuy states the RAM (12GB) and two retail
 }
 ```
 
-Searches with constraints return the constraints applied, `excluded_by_constraints`, `unverified_total`, and a `constraint_status` on each product: `matched` (a retailer's title states a value that meets the constraint) or `unverified` (not known to meet it: never treat as a match, tell the user it is unconfirmed; check `attributes[name]`, where `conflicting` means retailers disagree and missing means unknown). Products whose stated value fails a constraint are left out. A lite result also carries the `status` and value of just the constrained names, without `sources`, so a 64GB laptop is told apart from a 16GB one and disagreeing from unknown.
+Searches with constraints return the constraints applied, `excluded_by_constraints`, `unverified_total`, and a `constraint_status` on each product: `matched` (a retailer's title states a value that meets the constraint) or `unverified` (not known to meet it: never treat as a match, tell the user it is unconfirmed; check `attributes[name]`, where `conflicting` means retailers disagree and missing means unknown). Products whose stated value fails a constraint are left out. A lite result carries the `status` and value of every known spec, without `sources`, so a 64GB laptop is told apart from a 16GB one and disagreeing from unknown.
 
 - **Tolerance:** storage within 3% (1TB = 1000–1024GB) and screen size within 0.5 inch, on every operator. Retailers round sizes down, so a whole-number screen size N also covers up to N+1 on `eq` and `lte` (`eq 13` accepts 13.6", `lte 15` accepts 15.6", `gte` is unchanged). Other specs, memory included, are exact.
 - **Specs in `query`:** only a spec that says what it is counts ("24GB RAM", "1TB", "512GB SSD", "144Hz", `55"`). A bare "24GB" stays a search word. Memory, storage, resolution, refresh rate, power and Wi-Fi mean at least; screen size means that size.
@@ -166,7 +175,7 @@ Search across **26,000+ electronics products** from major UK retailers including
 **Detailed specs:**
 ```
 "Tell me the specs of this laptop"
-→ get_product(product_id) — returns its structured attributes, the retailer's description and every offer
+→ get_product(product_id) for the final pick — returns its structured attributes with sources, the retailer's description and every offer
 ```
 
 **Price range:**

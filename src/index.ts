@@ -243,11 +243,12 @@ const TOOLS: Tool[] = [
       "Only put differentiating terms in query: model lines (neo, ultra, oled), variants, model numbers (WH-1000XM5, s25 ultra). " +
       "Query words must appear in the title, except words naming the category ('router' in Networking) and bare numbers or specs ('4070', '16GB'), which are ignored when finding products and only rank them. Put a model number with its prefix ('RTX 4070', not '4070') and check each title for it. Leave out use-case words like gaming, cheap or best. " +
       "CROSS-CATEGORY NOTE: Gaming headsets → category='Headphones', query='gaming headset'. The Gaming category is consoles/controllers/accessories only. " +
-      "Always set lite=true. If 0 results, broaden the query or drop filters (but never present a near miss as meeting a requirement). " +
+      "Always set lite=true (it still carries `attributes`). If 0 results, broaden the query or drop filters (but never present a near miss as meeting a requirement). " +
       "Searches 26,000+ UK electronics products across 7 retailers with price comparison. Prices are in GBP. Every listing is new (refurbished and used are excluded). " +
       "PRICE COMPARISON: if offer_count > 1, call get_product for the 1-3 products you will recommend, not for every result, and show the cheapest in-stock retailer, the other prices with the difference and the exact saving among in-stock offers (offers[] is sorted in-stock first, then cheapest). " +
       "Only claim a saving between offers of the same configuration: if an attribute is `conflicting`, check offers[].title first. " +
-      "For specs not in `attributes` (ports, weight, battery), call get_product on the top 3-5 results; don't guess them from titles. " +
+      "COMPARING SPECS: compare products from the `attributes` in the search results, not by calling get_product on each: every spec known for a product is there as {status, value}, or {status, values} when conflicting, without sources. A missing name means unknown and `conflicting` means retailers disagree, so say so instead of guessing; a product with no `attributes` has no known specs. " +
+      "Call get_product only for your final 1-3 picks, for what only the retailer's description has (processor, GPU, ports, weight, battery), the offers and price comparison, and each retailer's buy link. Don't guess those details from titles. " +
       "SPEC REQUIREMENTS: put exact requirements in `constraints`, not in query, and always set `category` (and brand if known) with them: a search of only specs is rejected. " +
       "If a requirement is ambiguous (e.g. '16GB' could be RAM or storage), ask the user or search without that constraint. " +
       "With constraints, every product has `constraint_status` per name: " +
@@ -255,7 +256,6 @@ const TOOLS: Tool[] = [
       "Never treat 'unverified' as a match or say a product meets a requirement because it was returned: tell the user it is unconfirmed. " +
       "Products whose stated value fails are left out (`excluded_by_constraints`). Matched results come first, also with sort='price_asc'. " +
       "With constraints, `total` counts the products that match every constraint and `unverified_total` the unverified products that passed the other filters (only some may be in `products`). If `total` is 0, say no product is known to meet every requirement and offer the unverified ones only as unconfirmed. " +
-      "With lite=true, `attributes` holds only the constrained names, as {status, value} or {status, values} when conflicting: state the value from there, and call get_product for the rest. " +
       "If `candidates_truncated` is true, the first 2,000 candidates in the chosen sort order were checked and more exist: add a brand or category, or a narrower query, and search again before saying nothing matches. If the search was already narrowed, tell the user the results may be incomplete. " +
       "STOCK: availability is in_stock, low_stock, out_of_stock or unknown (the retailer gave no stock signal: say so, don't assume). When availability is out_of_stock, mention it as an alternative and suggest checking back — do not silently omit it. " +
       "purchase_url is a trustrails.app/go/ redirect through an affiliate link; TrustRails may earn a commission, and the price is the same. " +
@@ -313,7 +313,7 @@ const TOOLS: Tool[] = [
         lite: {
           type: "boolean",
           description:
-            "Return trimmed product objects with only essential fields (id, title, brand, price, currency, availability, image_url, purchase_url, offer_count and, with constraints, constraint_status and the status and value of the constrained names). Always set to true unless full product objects are needed.",
+            "Return trimmed product objects with only essential fields (id, title, brand, price, currency, availability, image_url, purchase_url, offer_count, attributes (every known spec as {status, value}, without sources) and, with constraints, constraint_status). Always set to true unless you need ean, category, provenance or the sources of each attribute.",
         },
         limit: {
           type: "number",
@@ -338,8 +338,8 @@ const TOOLS: Tool[] = [
       "It can describe another configuration or a maximum ('up to 32GB'), so it never overrides or fills in an attribute: if an attribute is missing or conflicting, that spec is unknown or unconfirmed, and you may mention what the description says only as 'the retailer's description mentions X, unconfirmed'. " +
       "It also returns pricing, availability, delivery time, and all retailer offers with per-retailer pricing (offers[].stock is a unit count only when the retailer supplies one, otherwise null). " +
       "Accepts both canonical product IDs and original retailer offer IDs. " +
-      "Use this after search_products to get detailed specs for comparison or recommendations. " +
-      "Always call this when a user needs precise product attributes, compatibility info, side-by-side comparisons, or price comparison across retailers.",
+      "Use this after search_products for your final 1-3 picks, not for every result: search results already carry `attributes` to compare specs. " +
+      "Call this when a user needs details only the description has, compatibility info, or price comparison across retailers.",
     inputSchema: {
       type: "object",
       properties: {
