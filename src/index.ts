@@ -245,11 +245,11 @@ const TOOLS: Tool[] = [
       "CROSS-CATEGORY NOTE: Gaming headsets → category='Headphones', query='gaming headset'. The Gaming category is consoles/controllers/accessories only. " +
       "Always set lite=true (it still carries `attributes`). If 0 results, broaden the query or drop filters (but never present a near miss as meeting a requirement). " +
       "Searches 26,000+ UK electronics products across 7 retailers with price comparison. Prices are in GBP. Every listing is new (refurbished and used are excluded). " +
-      "PRICE COMPARISON: if offer_count > 1, call get_product for your final 1-3 picks (see COMPARING SPECS), not for every result, and show the cheapest in-stock retailer, the other prices with the difference and the exact saving among in-stock offers (offers[] is sorted in-stock first, then cheapest). " +
-      "Before claiming a saving or recommending a pick, read offers[].title: they must name the same model and be the product type asked for (not an accessory or adapter); if they differ, don't claim a saving. " +
-      "COMPARING SPECS: compare products from the `attributes` in the search results, not by calling get_product on each. Every spec known for a product is there as {status, value}, or {status, values} when conflicting, without sources; names and units are as in `constraints`. 'confirmed' (two or more retailers state the same value) and 'inferred' (one retailer's title states it) are both the product's spec: state the value. Only `conflicting` (retailers disagree: say so, don't pick one) or a missing name (unknown) needs a caveat. A product with no `attributes` has none of these specs known: say they are unknown. " +
-      "Call get_product only for your final 1-3 picks, and only when you need what search lacks: what only the retailer's description has (processor, GPU, ports, weight, battery; if it doesn't give the detail, tell the user it isn't listed), or every retailer's offer and buy link (search results carry only the best offer's purchase_url). A pick with offer_count 1 needs no call unless the user asked for a description-only detail. Don't guess those details from titles. " +
-      "SPEC REQUIREMENTS: put exact requirements in `constraints`, not in query, and always set `category` (and brand if known) with them: a search of only specs is rejected. " +
+      "PRICE COMPARISON: for a final pick with offer_count > 1, get_product returns offers[] (sorted in-stock first, then cheapest): show the cheapest in-stock retailer, the other prices with the difference and the exact saving among in-stock offers. " +
+      "Before claiming a saving, read offers[].title (from get_product): they must name the same model; if they differ, don't claim one. Before recommending any pick, check its title is the product type asked for (not a cable, accessory or adapter). " +
+      "COMPARING SPECS: compare products from the `attributes` in the search results, not by calling get_product on each. Every spec known for a product is there as {status, value}, or {status, values} when conflicting, without sources; names and units are as in `constraints`. 'confirmed' (two or more retailers state the same value) and 'inferred' (one retailer's title states it) are both the product's spec: state the value. Only `conflicting` (retailers disagree: say so, don't pick one) or a missing name (unknown) needs a caveat. A product with no `attributes` has none of these seven specs known: say so only if the user asked about one. " +
+      "Call get_product only for your final 1-3 picks, and only when you need what search lacks: what only the retailer's description has (processor, GPU, ports, weight, battery), or every retailer's offer and buy link (search results carry only the best offer's purchase_url (cheapest in stock)). A pick with offer_count 1 needs no call unless the user asked for a description-only detail. Don't guess those details from titles. " +
+      "SPEC REQUIREMENTS: put exact requirements in `constraints`, not in query, and always set `category` (and brand if known) with `constraints`: a search of only specs is rejected. " +
       "If a requirement is ambiguous (e.g. '16GB' could be RAM or storage), ask the user or search without that constraint. " +
       "With constraints, every product has `constraint_status` per name: " +
       "'matched' = a retailer's title states a value that meets it. 'unverified' = not known to meet it: check `attributes[name]`, where `conflicting` means retailers disagree and missing means unknown. " +
@@ -302,7 +302,7 @@ const TOOLS: Tool[] = [
             "Example: {\"memory_gb\": {\"gte\": 24}, \"storage_gb\": {\"gte\": 1000}, \"screen_in\": {\"eq\": 15}}. " +
             "Names and units: memory_gb (RAM, GB), storage_gb (GB, 1TB = 1000), screen_in (inches), resolution_p (pixels high: 4K = 2160, QHD = 1440, Full HD = 1080), " +
             "refresh_hz (Hz), power_w (W), wifi_gen (Wi-Fi generation: 6, 6E = 6.5, 7). " +
-            "A spec written in query counts only when it says what it is ('24GB RAM', '1TB', '144Hz', '55\"') and means at least, except screen size (that size); a bare '24GB' stays a search word. Explicit constraints win over it.",
+            "A spec written in query counts only when it says what it is ('24GB RAM', '1TB', '144Hz', '55\"') and means at least, except screen size (that size); a bare '24GB' stays a search word. Explicit constraints win over it. A plain '16GB' or '65W' is gte; use eq only when the user says exactly, and for screen size.",
           properties: Object.fromEntries(
             CONSTRAINT_NAMES.map((name) => [
               name,
@@ -313,7 +313,7 @@ const TOOLS: Tool[] = [
         lite: {
           type: "boolean",
           description:
-            "Return trimmed product objects with only essential fields (id, title, brand, price, currency, availability, image_url, purchase_url, offer_count, attributes (every known spec as {status, value}, without sources) and, with constraints, constraint_status). Always set to true unless you need ean, category, provenance or the sources of each attribute.",
+            "Return trimmed product objects with only essential fields (id, title, brand, price, currency, availability, image_url, purchase_url, offer_count, attributes (every known spec as {status, value}, without sources) and, with constraints, constraint_status). Always set to true; it still carries attributes. Use false only for ean, category, provenance or all sources at once.",
         },
         limit: {
           type: "number",
