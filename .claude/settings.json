@@ -1,0 +1,8 @@
+{
+  "extraKnownMarketplaces": {
+    "trustrails-claude-plugin": {
+      "source": { "source": "github", "repo": "james-webdev/trustrails-claude-plugin" }
+    }
+  },
+  "enabledPlugins": { "trustrails@trustrails-claude-plugin": true }
+}
