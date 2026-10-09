@@ -326,6 +326,7 @@ const TOOLS: Tool[] = [
         },
       },
     },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
   {
     name: "get_product",
@@ -349,6 +350,7 @@ const TOOLS: Tool[] = [
       },
       required: ["product_id"],
     },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
 ];
 // Handle tool listing
